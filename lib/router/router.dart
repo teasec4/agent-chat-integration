@@ -1,11 +1,22 @@
 import 'package:gemma4/presentation/chat/chat_page.dart';
+import 'package:gemma4/presentation/start/start_page.dart';
 import 'package:go_router/go_router.dart';
 
 class AppRouter {
   static final router = GoRouter(
-    initialLocation: '/chat',
+    initialLocation: '/',
     routes: [
-      GoRoute(path: '/chat', builder: (context, state) => ChatPage()),
+      GoRoute(path: '/', builder: (context, state) => StartPage(),
+        routes: [
+          GoRoute(path: '/chat/:title', builder: (context, state) {
+            final title = state.pathParameters['title'];
+            if (title == null) {
+              return ChatPage(title: "Not Found");
+            }
+            return ChatPage(title: title);
+          }),
+        ]
+      ),
     ],
   );
 }

@@ -5,7 +5,8 @@ import 'package:gemma4/presentation/view_models/chat_view_model.dart';
 import 'package:provider/provider.dart';
 
 class ChatPage extends StatelessWidget {
-  const ChatPage({super.key});
+  final String title;
+  const ChatPage({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +14,7 @@ class ChatPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Chat"),
+        title: Text(title),
       ),
       body: Container(
         padding: const EdgeInsets.all(8),

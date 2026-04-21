@@ -38,8 +38,6 @@
 !.gitignore
 !.github/
 !.github/**
-!windows/
-!windows/**
 
 # =========================
 # Allow custom scripts (optional)

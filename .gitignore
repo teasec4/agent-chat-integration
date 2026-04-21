@@ -1,0 +1,69 @@
+# =========================
+# Ignore everything by default
+# =========================
+*
+
+# =========================
+# Allow source code
+# =========================
+!lib/
+!lib/**
+
+# =========================
+# Spec for Agent work flow
+!spec/
+!spec/**
+# =========================
+#
+# =========================
+# Agents 
+!agents
+!agents/**
+
+!.ai/
+!.ai/**
+
+
+# =========================
+# Allow dependency config
+# =========================
+!pubspec.yaml
+!pubspec.lock
+!analysis_options.yaml
+
+# =========================
+# Allow documentation
+# =========================
+!README.md
+!.gitignore
+!.github/
+!.github/**
+!windows/
+!windows/**
+
+# =========================
+# Allow custom scripts (optional)
+# =========================
+!scripts/
+!scripts/**
+
+# =========================
+# Explicitly ignore generated stuff
+# =========================
+.dart_tool/
+.build/
+build/
+coverage/
+.pub/
+.pub-cache/
+.flutter-plugins-dependencies
+
+# =========================
+# IDE / OS junk
+# =========================
+*.iml
+.idea/
+.vscode/
+.DS_Store
+*.log
+*.swp

@@ -1,18 +1,25 @@
 import 'package:flutter/foundation.dart';
+import 'package:gemma4/data/models/chat_request.dart';
 import 'package:gemma4/domain/entities/chat.dart';
 import 'package:gemma4/domain/entities/message.dart';
 import 'package:gemma4/domain/repositories/chat_repository.dart';
+import 'package:gemma4/domain/services/ai_service.dart';
 
 class ChatViewModel extends ChangeNotifier {
   final ChatRepository _chatRepository;
+  final AiService _aiService;
+  final VoidCallback? onTitleGenerated;
 
-  ChatViewModel(this._chatRepository);
+  static const _defaultTitle = 'New Chat';
+
+  ChatViewModel(this._chatRepository, this._aiService, {this.onTitleGenerated});
 
   Chat? _currentChat;
   final List<Message> _conversationHistory = [];
 
   bool _isLoading = false;
   String? _errorMessage;
+  bool _titleGenerated = false;
 
   int _promptTokens = 0;
   int _completionTokens = 0;
@@ -30,6 +37,7 @@ class ChatViewModel extends ChangeNotifier {
 
   Future<void> loadChat(int chatId) async {
     _errorMessage = null;
+    _titleGenerated = false;
     _currentChat = await _chatRepository.getChatById(chatId);
     debugPrint('[loadChat] chatId=$chatId, found=${_currentChat != null} id=${_currentChat?.id}');
     if (_currentChat != null) {
@@ -67,6 +75,11 @@ class ChatViewModel extends ChangeNotifier {
       _totalTokens = totalTokens;
 
       _conversationHistory.add(Message(role: Role.assistant, content: aiContent));
+
+      // Generate title on first AI response if still default
+      if (!_titleGenerated && _currentChat?.title == _defaultTitle) {
+        await _generateAndSetTitle(message);
+      }
     } catch (e) {
       // Remove the optimistically added user message
       _conversationHistory.removeLast();
@@ -74,6 +87,38 @@ class ChatViewModel extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _generateAndSetTitle(String firstUserMessage) async {
+    try {
+      final titleRequest = ChatRequest(
+        model: _chatRepository.model,
+        messages: [
+          ApiMessage(
+            role: Role.system,
+            content:
+                'Generate a very short title (2-3 words) summarizing this chat. '
+                'First message: "$firstUserMessage". '
+                'Respond ONLY with the title, no quotes, no punctuation.',
+          ),
+        ],
+        temperature: 0.1,
+        stream: false,
+      );
+
+      final response = await _aiService.getAiResponse(titleRequest);
+      final title = response.choices.firstOrNull?.message.content.trim();
+
+      if (title != null && title.isNotEmpty) {
+        await _chatRepository.updateChatTitle(_currentChat!.id, title);
+        _currentChat = Chat(id: _currentChat!.id, title: title);
+        _titleGenerated = true;
+        onTitleGenerated?.call();
+      }
+    } catch (e) {
+      // Title generation is non-critical — silently ignore failures
+      debugPrint('[titleGen] failed: $e');
     }
   }
 }

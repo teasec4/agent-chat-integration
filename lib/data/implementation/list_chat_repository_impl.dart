@@ -43,4 +43,15 @@ class ListChatRepositoryImpl implements ListChatsRepository {
       await _isar.chatEntrys.delete(chatId);
     });
   }
+
+  @override
+  Future<void> updateChatTitle(int chatId, String title) async {
+    await _isar.writeTxn(() async {
+      final chat = await _isar.chatEntrys.get(chatId);
+      if (chat != null) {
+        chat.title = title;
+        await _isar.chatEntrys.put(chat);
+      }
+    });
+  }
 }

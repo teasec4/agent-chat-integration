@@ -160,7 +160,7 @@ class _ChatSidebarState extends State<ChatSidebar> {
                 ),
               ),
               onTap: () => widget.onChatSelected(chat),
-              onLongPress: () => _confirmDelete(context, vm, chat),
+              onLongPress: () => _showChatActions(vm, chat),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
           ),
@@ -169,16 +169,19 @@ class _ChatSidebarState extends State<ChatSidebar> {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, ListChatViewModel vm, Chat chat) async {
-    final confirmed = await showDialog<bool>(
+  Future<void> _showChatActions(ListChatViewModel vm, Chat chat) async {
+    final action = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete chat?'),
-        content: Text('"${chat.title.isEmpty ? 'Chat #${chat.id}' : chat.title}" will be permanently deleted.'),
+        title: Text('"${chat.title.isEmpty ? 'Chat #${chat.id}' : chat.title}"'),
+        content: const Text('Choose an action:'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
+            onPressed: () => Navigator.of(ctx).pop('rename'),
+            child: const Text('Rename'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop('delete'),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
           ),
@@ -186,8 +189,59 @@ class _ChatSidebarState extends State<ChatSidebar> {
       ),
     );
 
-    if (confirmed == true && mounted) {
-      await vm.deleteChat(chat.id);
+    if (action == 'delete' && mounted) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Delete chat?'),
+          content: Text('"${chat.title.isEmpty ? 'Chat #${chat.id}' : chat.title}" will be permanently deleted.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed == true && mounted) {
+        await vm.deleteChat(chat.id);
+      }
+    } else if (action == 'rename' && mounted) {
+      _showRenameDialog(vm, chat);
+    }
+  }
+
+  Future<void> _showRenameDialog(ListChatViewModel vm, Chat chat) async {
+    final controller = TextEditingController(text: chat.title);
+    final newTitle = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Rename chat'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'Enter new name',
+            border: OutlineInputBorder(),
+          ),
+          onSubmitted: (value) => Navigator.of(ctx).pop(value.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (newTitle != null && newTitle.isNotEmpty && mounted) {
+      await vm.renameChat(chat.id, newTitle);
     }
   }
 }

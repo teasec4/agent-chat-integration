@@ -69,6 +69,17 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
+  Future<void> updateChatTitle(int chatId, String title) async {
+    await _isar.writeTxn(() async {
+      final chat = await _isar.chatEntrys.get(chatId);
+      if (chat != null) {
+        chat.title = title;
+        await _isar.chatEntrys.put(chat);
+      }
+    });
+  }
+
+  @override
   Future<(String, int, int, int)> sendToAi({
     required int chatId,
     required String userMessage,

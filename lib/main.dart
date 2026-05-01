@@ -20,14 +20,22 @@ void main() async {
   );
   final listChatRepository = ListChatRepositoryImpl(isar);
 
+  // Need late variable for the callback chain
+  late final ListChatViewModel listChatVm;
+  final chatVm = ChatViewModel(
+    chatRepository,
+    aiService,
+    onTitleGenerated: () => listChatVm.loadChats(),
+  );
+
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => ChatViewModel(chatRepository),
+        ChangeNotifierProvider.value(
+          value: chatVm,
         ),
-        ChangeNotifierProvider(
-          create: (_) => ListChatViewModel(listChatRepository),
+        ChangeNotifierProvider<ListChatViewModel>(
+          create: (_) => listChatVm = ListChatViewModel(listChatRepository),
         ),
       ],
       child: MaterialApp.router(

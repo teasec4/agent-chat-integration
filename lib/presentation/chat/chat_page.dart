@@ -6,14 +6,12 @@ import 'package:provider/provider.dart';
 
 class ChatPage extends StatefulWidget {
   final int chatId;
-  final bool showBackButton;
-  final VoidCallback? onBack;
+  final VoidCallback? onOpenChatList;
 
   const ChatPage({
     super.key,
     required this.chatId,
-    this.showBackButton = false,
-    this.onBack,
+    this.onOpenChatList,
   });
 
   @override
@@ -71,102 +69,120 @@ class _ChatPageState extends State<ChatPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        leading: widget.showBackButton
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: widget.onBack,
-              )
-            : null,
-        title: Text(chatViewModel.currentChat?.title ?? 'Loading...'),
-      ),
-      body: Column(
+      body: Stack(
         children: [
-          if (chatViewModel.isLoading && chatViewModel.conversationHistory.isEmpty)
-            const LinearProgressIndicator(),
-          if (chatViewModel.errorMessage != null)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: Theme.of(context).colorScheme.errorContainer,
-              child: Text(
-                chatViewModel.errorMessage!,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onErrorContainer,
-                  fontSize: 13,
+          Column(
+            children: [
+              if (chatViewModel.isLoading && chatViewModel.conversationHistory.isEmpty)
+                const LinearProgressIndicator(),
+              if (chatViewModel.errorMessage != null)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: Text(
+                    chatViewModel.errorMessage!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              Expanded(
+                child: chatViewModel.conversationHistory.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.chat_bubble_outline_rounded,
+                              size: 48,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Start a conversation',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Send a message to begin',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[400],
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                        itemCount: chatViewModel.conversationHistory.length,
+                        itemBuilder: (context, index) {
+                          final msg = chatViewModel.conversationHistory[index];
+                          final isFirstInGroup = index == 0 ||
+                              chatViewModel.conversationHistory[index - 1].role.name !=
+                                  msg.role.name;
+
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              top: isFirstInGroup ? 8 : 3,
+                            ),
+                            child: ChatBubble(
+                              message: msg,
+                              showSender: isFirstInGroup,
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              // Input area with safe area on mobile
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+                  child: ChatInput(
+                    onSend: (text) {
+                      chatViewModel.sendMessage(text);
+                      _scrollToBottom();
+                    },
+                    isLoading: chatViewModel.isLoading,
+                    modelName: chatViewModel.model,
+                    promptTokens: chatViewModel.promptTokens,
+                    completionTokens: chatViewModel.completionTokens,
+                    totalTokens: chatViewModel.totalTokens,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // Floating chat list button (top-left corner)
+          if (widget.onOpenChatList != null)
+            Positioned(
+              top: 8,
+              left: 8,
+              child: Material(
+                elevation: 2,
+                borderRadius: BorderRadius.circular(20),
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: widget.onOpenChatList,
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Icon(
+                      Icons.chat_bubble_outline_rounded,
+                      size: 22,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
                 ),
               ),
             ),
-          Expanded(
-            child: chatViewModel.conversationHistory.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.chat_bubble_outline_rounded,
-                          size: 48,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Start a conversation',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Send a message to begin',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[400],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                    itemCount: chatViewModel.conversationHistory.length,
-                    itemBuilder: (context, index) {
-                      final msg = chatViewModel.conversationHistory[index];
-                      final isFirstInGroup = index == 0 ||
-                          chatViewModel.conversationHistory[index - 1].role.name !=
-                              msg.role.name;
-
-                      return Padding(
-                        padding: EdgeInsets.only(
-                          top: isFirstInGroup ? 8 : 3,
-                        ),
-                        child: ChatBubble(
-                          message: msg,
-                          showSender: isFirstInGroup,
-                        ),
-                      );
-                    },
-                  ),
-          ),
-          // Input area with safe area on mobile
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
-              child: ChatInput(
-                onSend: (text) {
-                  chatViewModel.sendMessage(text);
-                  _scrollToBottom();
-                },
-                isLoading: chatViewModel.isLoading,
-                modelName: chatViewModel.model,
-                promptTokens: chatViewModel.promptTokens,
-                completionTokens: chatViewModel.completionTokens,
-                totalTokens: chatViewModel.totalTokens,
-              ),
-            ),
-          ),
         ],
       ),
     );

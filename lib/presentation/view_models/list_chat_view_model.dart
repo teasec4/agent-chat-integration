@@ -54,4 +54,18 @@ class ListChatViewModel extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<void> renameChat(int chatId, String newTitle) async {
+    try {
+      await _repository.updateChatTitle(chatId, newTitle);
+      final index = _chats.indexWhere((c) => c.id == chatId);
+      if (index != -1) {
+        _chats[index] = Chat(id: chatId, title: newTitle);
+      }
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Failed to rename chat: $e';
+      notifyListeners();
+    }
+  }
 }

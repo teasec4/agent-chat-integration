@@ -124,8 +124,7 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
       child: ChatPage(
         chatId: _selectedChatId!,
         key: ValueKey(_selectedChatId),
-        showBackButton: true,
-        onBack: _goBackToChatList,
+        onOpenChatList: _goBackToChatList,
       ),
     );
   }

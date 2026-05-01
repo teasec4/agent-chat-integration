@@ -41,6 +41,7 @@ dependencies:
   isar_community_flutter_libs: ^3.3.0
   path_provider: ^2.1.5
   http: ^1.6.0
+  flutter_markdown_plus: ^1.0.7
 
 dev_dependencies:
   flutter_test:

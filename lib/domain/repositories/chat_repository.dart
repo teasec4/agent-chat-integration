@@ -17,4 +17,7 @@ abstract class ChatRepository {
 
   /// Get all messages for a chat.
   Future<List<Message>> getMessagesForChat(int chatId);
+
+  /// Update the title of a chat.
+  Future<void> updateChatTitle(int chatId, String title);
 }

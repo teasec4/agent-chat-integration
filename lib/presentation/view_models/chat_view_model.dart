@@ -1,12 +1,15 @@
 import 'package:flutter/foundation.dart';
-import 'package:gemma4/data/models/chat_request.dart';
-import 'package:gemma4/data/models/role.dart';
-import 'package:gemma4/service/api/gemma_api_service.dart';
+import 'package:gemma4/domain/entities/chat.dart';
+import 'package:gemma4/domain/entities/message.dart';
+import 'package:gemma4/domain/repositories/chat_repository.dart';
 
 class ChatViewModel extends ChangeNotifier {
-  final GemmaApiService _gemmaApiService = GemmaApiService();
+  final ChatRepository _chatRepository;
 
-  List<Message> conversationHistory = [];
+  ChatViewModel(this._chatRepository);
+
+  Chat? _currentChat;
+  final List<Message> _conversationHistory = [];
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -20,6 +23,26 @@ class ChatViewModel extends ChangeNotifier {
   int get promptTokens => _promptTokens;
   int get completionTokens => _completionTokens;
   int get totalTokens => _totalTokens;
+  Chat? get currentChat => _currentChat;
+  String get model => _chatRepository.model;
+  List<Message> get conversationHistory =>
+      List.unmodifiable(_conversationHistory);
+
+  Future<void> loadChat(int chatId) async {
+    _errorMessage = null;
+    _currentChat = await _chatRepository.getChatById(chatId);
+    debugPrint('[loadChat] chatId=$chatId, found=${_currentChat != null} id=${_currentChat?.id}');
+    if (_currentChat != null) {
+      final messages = await _chatRepository.getMessagesForChat(_currentChat!.id);
+      debugPrint('[loadChat] messages count=${messages.length}');
+      _conversationHistory
+        ..clear()
+        ..addAll(messages);
+    } else {
+      debugPrint('[loadChat] chat NOT FOUND for id=$chatId');
+    }
+    notifyListeners();
+  }
 
   Future<void> sendMessage(String message) async {
     _errorMessage = null;
@@ -27,33 +50,28 @@ class ChatViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final newUserMessage = Message(role: Role.user, content: message);
-      conversationHistory.add(newUserMessage);
+      _conversationHistory.add(Message(role: Role.user, content: message));
 
-      final request = ChatRequest(
-        model: 'gemma4',
-        messages: conversationHistory,
-        temperature: 0.7,
-        stream: false,
+      final (
+        aiContent,
+        promptTokens,
+        completionTokens,
+        totalTokens,
+      ) = await _chatRepository.sendToAi(
+        chatId: _currentChat!.id,
+        userMessage: message,
       );
 
-      final response = await _gemmaApiService.getAiResponse(request);
+      _promptTokens = promptTokens;
+      _completionTokens = completionTokens;
+      _totalTokens = totalTokens;
 
-      _promptTokens = response.promptTokens;
-      _completionTokens = response.completionTokens;
-      _totalTokens = response.totalTokens;
-
-      final aiContent =
-          response.choices.first?.message.content ??
-          "Ошибка: Ответ не содержит контента.";
-      final newAssistantMessage = Message(
-        role: Role.assistant,
-        content: aiContent,
-      );
-      conversationHistory.add(newAssistantMessage);
+      _conversationHistory.add(Message(role: Role.assistant, content: aiContent));
     } catch (e) {
-      throw Exception('Failed to send message: $e');
-    } finally{
+      // Remove the optimistically added user message
+      _conversationHistory.removeLast();
+      _errorMessage = 'Ошибка: ${e.toString().replaceFirst('Exception: ', '')}';
+    } finally {
       _isLoading = false;
       notifyListeners();
     }

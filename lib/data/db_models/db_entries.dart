@@ -1,26 +1,14 @@
-import 'package:gemma4/data/models/role.dart';
+import 'package:gemma4/domain/entities/message.dart';
 import 'package:isar_community/isar.dart';
-import 'package:uuid/uuid.dart';
 
 part 'db_entries.g.dart';
 
-@collection
-class ChatSession{
-  Id id = Isar.autoIncrement;
-  String sessionId = const Uuid().v4();
-  
-  @Backlink(to: 'sessionId')
-  final entries = IsarLinks<ChatEntry>();
-}
 
 @collection
 class ChatEntry {
   Id id = Isar.autoIncrement;
-  
-  final sessionId = IsarLink<ChatSession>();
 
-  @Backlink(to: 'chat')
-  final messages = IsarLinks<Message>();
+  String title = '';
 }
 
 @collection
@@ -33,6 +21,6 @@ class Message {
   late String content;
 
   late DateTime createdAt;
-  
-  final chat = IsarLink<ChatEntry>();
+
+  late int chatId;
 }

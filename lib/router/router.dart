@@ -6,16 +6,21 @@ class AppRouter {
   static final router = GoRouter(
     initialLocation: '/',
     routes: [
-      GoRoute(path: '/', builder: (context, state) => StartPage(),
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const StartPage(),
         routes: [
-          GoRoute(path: '/chat/:title', builder: (context, state) {
-            final title = state.pathParameters['title'];
-            if (title == null) {
-              return ChatPage(title: "Not Found");
-            }
-            return ChatPage(title: title);
-          }),
-        ]
+          GoRoute(
+            path: 'chat/:chatId',
+            builder: (context, state) {
+              final chatId = int.tryParse(state.pathParameters['chatId'] ?? '');
+              if (chatId == null) {
+                return const StartPage();
+              }
+              return ChatPage(chatId: chatId);
+            },
+          ),
+        ],
       ),
     ],
   );

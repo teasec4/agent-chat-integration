@@ -1,4 +1,4 @@
-enum Role { system, user, assistant; }
+enum Role { system, user, assistant }
 
 extension RoleToString on Role {
   String get value {
@@ -11,4 +11,11 @@ extension RoleToString on Role {
         return 'assistant';
     }
   }
+}
+
+class Message {
+  final Role role;
+  final String content;
+
+  const Message({required this.role, required this.content});
 }

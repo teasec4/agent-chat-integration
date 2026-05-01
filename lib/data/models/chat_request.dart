@@ -1,8 +1,8 @@
-import 'package:gemma4/data/models/role.dart';
+import 'package:gemma4/domain/entities/message.dart';
 
 class ChatRequest {
   final String model;
-  final List<Message> messages;
+  final List<ApiMessage> messages;
   final double temperature;
   final bool stream;
 
@@ -18,11 +18,11 @@ class ChatRequest {
   }
 }
 
-class Message {
+class ApiMessage {
   final Role role;
   final String content;
 
-  Message({required this.role, required this.content});
+  ApiMessage({required this.role, required this.content});
   
   Map<String, dynamic> toJson() {
     return {

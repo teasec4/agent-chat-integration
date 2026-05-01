@@ -1,4 +1,4 @@
-import 'package:gemma4/data/models/role.dart';
+import 'package:gemma4/domain/entities/message.dart';
 
 class MessageContent {
   final Role role;

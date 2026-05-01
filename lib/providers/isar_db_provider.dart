@@ -1,24 +1,21 @@
-import 'package:flutter/foundation.dart';
+
 import 'package:gemma4/data/db_models/db_entries.dart';
 import 'package:isar_community/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
-class IsarDbProvider extends ChangeNotifier {
-  late Isar isar;
+class IsarDbProvider{
 
-  IsarDbProvider(this.isar) : super();
-
-  Future<void> open(List<CollectionSchema> schemas) async {
+  Future<Isar> open() async {
     final dir = await getApplicationDocumentsDirectory();
-    final isar = await Isar.open(schemas, directory: dir.path);
-    this.isar = isar;
-    notifyListeners();
+    final isar = await Isar.open(IsarDbProvider.schemas, directory: dir.path);
+    return isar;
   }
+  
+  static const List<CollectionSchema> schemas = [
+    ChatEntrySchema,
+    MessageSchema
+  ];
 }
 
 
-const List<CollectionSchema> schemas = [
-  ChatSessionSchema,
-  ChatEntrySchema,
-  MessageSchema
-];
+

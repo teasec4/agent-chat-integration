@@ -112,7 +112,7 @@ class ChatRepositoryImpl implements ChatRepository {
 
       final aiContent =
           response.choices.firstOrNull?.message.content ??
-          'Ошибка: Ответ не содержит контента.';
+          'Error: Empty response from AI.';
 
       // Save AI response
       await _saveMessage(

@@ -78,7 +78,7 @@ class _ChatPageState extends State<ChatPage> {
                 onPressed: widget.onBack,
               )
             : null,
-        title: Text(chatViewModel.currentChat?.title ?? 'Загрузка...'),
+        title: Text(chatViewModel.currentChat?.title ?? 'Loading...'),
       ),
       body: Column(
         children: [
@@ -110,7 +110,7 @@ class _ChatPageState extends State<ChatPage> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Начните диалог',
+                          'Start a conversation',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[500],
@@ -118,7 +118,7 @@ class _ChatPageState extends State<ChatPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Отправьте сообщение чтобы начать',
+                          'Send a message to begin',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey[400],

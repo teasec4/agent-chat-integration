@@ -23,20 +23,20 @@ class ListChatViewModel extends ChangeNotifier {
     try {
       _chats = await _repository.getChats();
     } catch (e) {
-      _errorMessage = 'Не удалось загрузить чаты: $e';
+      _errorMessage = 'Failed to load chats: $e';
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<Chat?> createChat({String title = 'Новый чат'}) async {
+  Future<Chat?> createChat({String title = 'New Chat'}) async {
     try {
       final chat = await _repository.createChat(title: title);
       await loadChats(); // reload list
       return chat;
     } catch (e) {
-      _errorMessage = 'Не удалось создать чат: $e';
+      _errorMessage = 'Failed to create chat: $e';
       notifyListeners();
       return null;
     }
@@ -49,7 +49,7 @@ class ListChatViewModel extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = 'Не удалось удалить чат: $e';
+      _errorMessage = 'Failed to delete chat: $e';
       notifyListeners();
       return false;
     }

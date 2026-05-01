@@ -94,7 +94,7 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
               icon: const Icon(Icons.chevron_right, size: 20),
               padding: EdgeInsets.zero,
               visualDensity: VisualDensity.compact,
-              tooltip: 'Развернуть боковую панель',
+              tooltip: 'Expand sidebar',
             ),
           ],
         ),
@@ -138,12 +138,12 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
           Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'Выберите чат',
+            'Select a chat',
             style: TextStyle(fontSize: 18, color: Colors.grey[500]),
           ),
           const SizedBox(height: 8),
           Text(
-            'или создайте новый',
+            'or create a new one',
             style: TextStyle(fontSize: 14, color: Colors.grey[400]),
           ),
         ],

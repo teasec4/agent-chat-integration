@@ -35,7 +35,7 @@ class ChatBubble extends StatelessWidget {
                   bottom: 2,
                 ),
                 child: Text(
-                  isUser ? 'Вы' : 'Gemma',
+                  isUser ? 'You' : 'Gemma',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,

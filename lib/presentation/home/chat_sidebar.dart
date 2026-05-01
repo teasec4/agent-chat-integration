@@ -71,7 +71,7 @@ class _ChatSidebarState extends State<ChatSidebar> {
                       icon: const Icon(Icons.chevron_left, size: 20),
                       padding: EdgeInsets.zero,
                       visualDensity: VisualDensity.compact,
-                      tooltip: 'Свернуть боковую панель',
+                      tooltip: 'Collapse sidebar',
                     ),
                   ),
                 SizedBox(
@@ -82,7 +82,7 @@ class _ChatSidebarState extends State<ChatSidebar> {
                     icon: const Icon(Icons.add, size: 20),
                     padding: EdgeInsets.zero,
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'Новый чат',
+                    tooltip: 'New Chat',
                   ),
                 ),
               ],
@@ -112,7 +112,7 @@ class _ChatSidebarState extends State<ChatSidebar> {
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => vm.loadChats(),
-                child: const Text('Повторить'),
+                child: const Text('Retry'),
               ),
             ],
           ),
@@ -127,9 +127,9 @@ class _ChatSidebarState extends State<ChatSidebar> {
           children: [
             Icon(Icons.chat_bubble_outline, size: 40, color: Colors.grey[400]),
             const SizedBox(height: 12),
-            Text('Нет чатов', style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+            Text('No chats', style: TextStyle(color: Colors.grey[500], fontSize: 13)),
             const SizedBox(height: 4),
-            Text('Нажмите + чтобы создать', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+            Text('Press + to create one', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
           ],
         ),
       );
@@ -151,7 +151,7 @@ class _ChatSidebarState extends State<ChatSidebar> {
               dense: true,
               leading: Icon(Icons.message_outlined, size: 18, color: isActive ? Theme.of(context).colorScheme.primary : null),
               title: Text(
-                chat.title.isEmpty ? 'Чат #${chat.id}' : chat.title,
+                chat.title.isEmpty ? 'Chat #${chat.id}' : chat.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -173,14 +173,14 @@ class _ChatSidebarState extends State<ChatSidebar> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Удалить чат?'),
-        content: Text('"${chat.title.isEmpty ? 'Чат #${chat.id}' : chat.title}" будет удалён безвозвратно.'),
+        title: const Text('Delete chat?'),
+        content: Text('"${chat.title.isEmpty ? 'Chat #${chat.id}' : chat.title}" will be permanently deleted.'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Отмена')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Удалить'),
+            child: const Text('Delete'),
           ),
         ],
       ),

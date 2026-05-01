@@ -70,7 +70,7 @@ class ChatViewModel extends ChangeNotifier {
     } catch (e) {
       // Remove the optimistically added user message
       _conversationHistory.removeLast();
-      _errorMessage = 'Ошибка: ${e.toString().replaceFirst('Exception: ', '')}';
+      _errorMessage = 'Error: ${e.toString().replaceFirst('Exception: ', '')}';
     } finally {
       _isLoading = false;
       notifyListeners();

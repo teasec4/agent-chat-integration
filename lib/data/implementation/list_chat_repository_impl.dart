@@ -18,7 +18,7 @@ class ListChatRepositoryImpl implements ListChatsRepository {
   // --- interface implementation ---
 
   @override
-  Future<Chat> createChat({String title = 'Новый чат'}) async {
+  Future<Chat> createChat({String title = 'New Chat'}) async {
     final chat = db.ChatEntry()..title = title;
     await _isar.writeTxn(() async {
       final id = await _isar.chatEntrys.put(chat);

@@ -1,18 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:gemma4/presentation/chat/widgets/chat_bubble.dart';
 import 'package:gemma4/presentation/chat/widgets/chat_input.dart';
 import 'package:gemma4/presentation/view_models/chat_view_model.dart';
 import 'package:provider/provider.dart';
 
 class ChatPage extends StatefulWidget {
   final int chatId;
+  final bool showBackButton;
+  final VoidCallback? onBack;
 
-  const ChatPage({super.key, required this.chatId});
+  const ChatPage({
+    super.key,
+    required this.chatId,
+    this.showBackButton = false,
+    this.onBack,
+  });
 
   @override
   State<ChatPage> createState() => _ChatPageState();
 }
 
 class _ChatPageState extends State<ChatPage> {
+  final _scrollController = ScrollController();
+  int _previousMessageCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -22,87 +33,141 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   @override
+  void didUpdateWidget(ChatPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.chatId != widget.chatId) {
+      _previousMessageCount = 0;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<ChatViewModel>().loadChat(widget.chatId);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final chatViewModel = context.watch<ChatViewModel>();
 
+    // Scroll to bottom only when new messages arrive
+    final count = chatViewModel.conversationHistory.length;
+    if (count > _previousMessageCount) {
+      _previousMessageCount = count;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    }
+
     return Scaffold(
       appBar: AppBar(
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: widget.onBack,
+              )
+            : null,
         title: Text(chatViewModel.currentChat?.title ?? 'Загрузка...'),
       ),
-      body: Container(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          children: [
-            if (chatViewModel.isLoading)
-              const LinearProgressIndicator(),
-            if (chatViewModel.errorMessage != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  chatViewModel.errorMessage!,
-                  style: const TextStyle(color: Colors.red),
+      body: Column(
+        children: [
+          if (chatViewModel.isLoading && chatViewModel.conversationHistory.isEmpty)
+            const LinearProgressIndicator(),
+          if (chatViewModel.errorMessage != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: Theme.of(context).colorScheme.errorContainer,
+              child: Text(
+                chatViewModel.errorMessage!,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onErrorContainer,
+                  fontSize: 13,
                 ),
               ),
-            Expanded(
-              child: chatViewModel.conversationHistory.isEmpty
-                  ? const Center(child: Text('Начните диалог'))
-                  : ListView.builder(
-                      itemCount: chatViewModel.conversationHistory.length,
-                      itemBuilder: (context, index) {
-                        final msg = chatViewModel.conversationHistory[index];
-                        final isUser = msg.role.name == 'user';
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 4,
-                            horizontal: 8,
+            ),
+          Expanded(
+            child: chatViewModel.conversationHistory.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          size: 48,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Начните диалог',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[500],
                           ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 2, right: 10),
-                                child: Icon(
-                                  isUser ? Icons.person : Icons.smart_toy,
-                                  size: 24,
-                                ),
-                              ),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      isUser ? 'Вы' : 'Gemma',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      msg.content,
-                                      style: const TextStyle(fontSize: 15),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Отправьте сообщение чтобы начать',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[400],
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
+                  )
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                    itemCount: chatViewModel.conversationHistory.length,
+                    itemBuilder: (context, index) {
+                      final msg = chatViewModel.conversationHistory[index];
+                      final isFirstInGroup = index == 0 ||
+                          chatViewModel.conversationHistory[index - 1].role.name !=
+                              msg.role.name;
+
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          top: isFirstInGroup ? 8 : 3,
+                        ),
+                        child: ChatBubble(
+                          message: msg,
+                          showSender: isFirstInGroup,
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          // Input area with safe area on mobile
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+              child: ChatInput(
+                onSend: (text) {
+                  chatViewModel.sendMessage(text);
+                  _scrollToBottom();
+                },
+                isLoading: chatViewModel.isLoading,
+                modelName: chatViewModel.model,
+                promptTokens: chatViewModel.promptTokens,
+                completionTokens: chatViewModel.completionTokens,
+                totalTokens: chatViewModel.totalTokens,
+              ),
             ),
-            const SizedBox(height: 8),
-            ChatInput(
-              onSend: chatViewModel.sendMessage,
-              isLoading: chatViewModel.isLoading,
-              modelName: chatViewModel.model,
-              promptTokens: chatViewModel.promptTokens,
-              completionTokens: chatViewModel.completionTokens,
-              totalTokens: chatViewModel.totalTokens,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

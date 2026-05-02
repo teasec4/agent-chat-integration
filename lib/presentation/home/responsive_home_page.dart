@@ -14,20 +14,15 @@ class ResponsiveHomePage extends StatefulWidget {
 }
 
 class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
-  int? _selectedChatId;
-  bool _sidebarVisible = true;
   ActiveTab _activeTab = ActiveTab.chat;
+  int? _selectedChatId;
   String? _selectedSettingsCategory;
-
-  bool get _isDesktop {
-    final width = MediaQuery.of(context).size.width;
-    return width >= 600;
-  }
+  bool _sidebarVisible = false;
 
   void _selectChat(Chat chat) {
     setState(() {
       _selectedChatId = chat.id;
-      _activeTab = ActiveTab.chat;
+      _sidebarVisible = false;
     });
   }
 
@@ -38,48 +33,45 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
   }
 
   void _toggleSidebar() {
-    setState(() {
-      _sidebarVisible = !_sidebarVisible;
-    });
-  }
-
-  void _switchTab(ActiveTab tab) {
-    setState(() {
-      _activeTab = tab;
-    });
+    setState(() => _sidebarVisible = !_sidebarVisible);
   }
 
   void _selectSettingsCategory(String id) {
     setState(() {
       _selectedSettingsCategory = id;
+      _sidebarVisible = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isDesktop) {
-      return _buildDesktopLayout();
-    }
-    return _buildMobileLayout();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        if (width >= 768) return _buildWideLayout();
+        if (width >= 480) return _buildMidLayout();
+        return _buildNarrowLayout();
+      },
+    );
   }
 
-  Widget _buildDesktopLayout() {
+  // ──────────────────────────────────────────────
+  // Wide (>=768): 3-column desktop
+  // ──────────────────────────────────────────────
+  Widget _buildWideLayout() {
     return Scaffold(
       body: SafeArea(
         child: Row(
           children: [
-            // Thin tab bar — always visible
             LeftTabBar(
               activeTab: _activeTab,
-              onTabChanged: _switchTab,
+              onTabChanged: _switchTabWide,
             ),
-            // Sidebar panel or collapsed bar
             if (_sidebarVisible)
               SizedBox(width: 280, child: _buildSidebar())
             else
               _buildCollapsedBar(),
             _buildVerticalDivider(),
-            // Main content
             Expanded(child: _buildContent()),
           ],
         ),
@@ -87,19 +79,161 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
     );
   }
 
+  // On wide, switching tabs resets the sidebar visible state
+  void _switchTabWide(ActiveTab tab) {
+    setState(() {
+      _activeTab = tab;
+      _sidebarVisible = true;
+    });
+  }
+
+  // ──────────────────────────────────────────────
+  // Mid (480-768): tab bar + sidebar as overlay
+  // ──────────────────────────────────────────────
+  Widget _buildMidLayout() {
+    return Scaffold(
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Row(
+              children: [
+                LeftTabBar(
+                  activeTab: _activeTab,
+                  onTabChanged: _switchTabMid,
+                  compact: true,
+                ),
+                Expanded(child: _buildContent()),
+              ],
+            ),
+            // Scrim behind overlay sidebar
+            if (_sidebarVisible)
+              GestureDetector(
+                onTap: () => setState(() => _sidebarVisible = false),
+                child: Container(color: Colors.black38),
+              ),
+            // Sidebar overlay — slides in from left after tab bar
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              left: _sidebarVisible ? 40 : -280,
+              top: 0,
+              bottom: 0,
+              width: 280,
+              child: Material(
+                elevation: 8,
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                child: _buildSidebar(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // On mid, tapping the active tab toggles the sidebar overlay
+  void _switchTabMid(ActiveTab tab) {
+    setState(() {
+      if (_activeTab == tab) {
+        _sidebarVisible = !_sidebarVisible;
+      } else {
+        _activeTab = tab;
+        _selectedSettingsCategory = null;
+        _sidebarVisible = true;
+      }
+    });
+  }
+
+  // ──────────────────────────────────────────────
+  // Narrow (<480): bottom nav + full-screen panels
+  // ──────────────────────────────────────────────
+  Widget _buildNarrowLayout() {
+    // When a chat is selected, show full-screen chat page with back button
+    if (_selectedChatId != null) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _goBackToChatList();
+        },
+        child: ChatPage(
+          chatId: _selectedChatId!,
+          key: ValueKey(_selectedChatId),
+          onOpenChatList: _goBackToChatList,
+        ),
+      );
+    }
+
+    return Scaffold(
+      body: _buildNarrowPage(),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _activeTab == ActiveTab.chat ? 0 : 1,
+        onDestinationSelected: (index) {
+          setState(() {
+            _activeTab = index == 0 ? ActiveTab.chat : ActiveTab.settings;
+            _selectedSettingsCategory = null;
+          });
+        },
+        height: 64,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline_rounded),
+            selectedIcon: Icon(Icons.chat_bubble_rounded),
+            label: 'Chats',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings_rounded),
+            label: 'Settings',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNarrowPage() {
+    switch (_activeTab) {
+      case ActiveTab.chat:
+        return ChatSidebar(
+          activeChatId: _selectedChatId,
+          onChatSelected: _selectChat,
+        );
+      case ActiveTab.settings:
+        return SettingsSidebar(
+          activeCategory: _selectedSettingsCategory,
+          onCategorySelected: (id) {
+            _selectSettingsCategory(id);
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => Scaffold(
+                  appBar: AppBar(
+                    title: Text(_categoryTitle(id)),
+                  ),
+                  body: SettingsPage(category: id),
+                ),
+              ),
+            );
+          },
+        );
+    }
+  }
+
+  // ──────────────────────────────────────────────
+  // Shared widgets
+  // ──────────────────────────────────────────────
+
   Widget _buildSidebar() {
     switch (_activeTab) {
       case ActiveTab.chat:
         return ChatSidebar(
           activeChatId: _selectedChatId,
           onChatSelected: _selectChat,
-          onToggleSidebar: _toggleSidebar,
         );
       case ActiveTab.settings:
         return SettingsSidebar(
           activeCategory: _selectedSettingsCategory,
           onCategorySelected: _selectSettingsCategory,
-          onClose: () => _switchTab(ActiveTab.chat),
+          onClose: () => _switchTabMid(ActiveTab.chat),
         );
     }
   }
@@ -114,7 +248,7 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
           );
         }
         return _buildEmptyState(
-          icon: Icons.chat_bubble_outline,
+          icon: Icons.chat_bubble_outline_rounded,
           title: 'Select a chat',
           subtitle: 'or create a new one',
         );
@@ -158,67 +292,6 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
     return const VerticalDivider(width: 1, thickness: 1);
   }
 
-  Widget _buildMobileLayout() {
-    if (_selectedChatId == null) {
-      // Mobile: show full-screen sidebar with settings accessible from app bar
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Mini AI Chat'),
-          actions: [
-            IconButton(
-              icon: Icon(
-                _activeTab == ActiveTab.settings
-                    ? Icons.chat_bubble_outline_rounded
-                    : Icons.settings_outlined,
-              ),
-              tooltip: _activeTab == ActiveTab.settings ? 'Chats' : 'Settings',
-              onPressed: () {
-                setState(() {
-                  _activeTab = _activeTab == ActiveTab.chat
-                      ? ActiveTab.settings
-                      : ActiveTab.chat;
-                });
-              },
-            ),
-          ],
-        ),
-        body: _activeTab == ActiveTab.chat
-            ? ChatSidebar(
-                activeChatId: _selectedChatId,
-                onChatSelected: _selectChat,
-              )
-            : SettingsSidebar(
-                activeCategory: _selectedSettingsCategory,
-                onCategorySelected: (id) {
-                  _selectSettingsCategory(id);
-                  // On mobile, navigate to full-screen settings page
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => Scaffold(
-                        appBar: AppBar(title: Text(_categoryTitle(id))),
-                        body: SettingsPage(category: id),
-                      ),
-                    ),
-                  );
-                },
-              ),
-      );
-    }
-
-    // Mobile: full-screen chat page with back button
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _goBackToChatList();
-      },
-      child: ChatPage(
-        chatId: _selectedChatId!,
-        key: ValueKey(_selectedChatId),
-        onOpenChatList: _goBackToChatList,
-      ),
-    );
-  }
-
   String _categoryTitle(String id) {
     const titles = {'general': 'General', 'model': 'Model', 'about': 'About'};
     return titles[id] ?? 'Settings';
@@ -229,20 +302,27 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
     required String title,
     required String subtitle,
   }) {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 64, color: Colors.grey[400]),
+          Icon(icon, size: 64, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4)),
           const SizedBox(height: 16),
           Text(
             title,
-            style: TextStyle(fontSize: 18, color: Colors.grey[500]),
+            style: TextStyle(
+              fontSize: 18,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             subtitle,
-            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+            style: TextStyle(
+              fontSize: 14,
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+            ),
           ),
         ],
       ),

@@ -8,9 +8,9 @@ import 'package:gemma4/domain/services/ai_service.dart';
 import 'package:http/http.dart' as http;
 
 class GemmaApiService implements AiService {
-  final String baseUrl;
+  String baseUrl;
   @override
-  final String model;
+  String model;
 
   GemmaApiService({
     this.baseUrl = 'http://localhost:1234',

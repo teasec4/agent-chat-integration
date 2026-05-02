@@ -11,6 +11,7 @@ abstract class ChatRepository {
   Future<(String, int, int, int)> sendToAi({
     required int chatId,
     required String userMessage,
+    double temperature = 0.7,
   });
 
   /// Send a user message to AI and stream the response.
@@ -18,6 +19,7 @@ abstract class ChatRepository {
   Stream<StreamEvent> sendToAiStream({
     required int chatId,
     required String userMessage,
+    double temperature = 0.7,
   });
 
   /// Get a chat by its ID.

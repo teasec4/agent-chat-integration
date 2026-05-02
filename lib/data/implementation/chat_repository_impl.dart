@@ -96,6 +96,7 @@ class ChatRepositoryImpl implements ChatRepository {
   Future<(String, int, int, int)> sendToAi({
     required int chatId,
     required String userMessage,
+    double temperature = 0.7,
   }) async {
     // Save user message first
     final userMsgId = await _saveMessage(
@@ -119,7 +120,7 @@ class ChatRepositoryImpl implements ChatRepository {
       final request = ChatRequest(
         model: _aiService.model,
         messages: requestMessages,
-        temperature: 0.7,
+        temperature: temperature,
         stream: false,
       );
 
@@ -155,6 +156,7 @@ class ChatRepositoryImpl implements ChatRepository {
   Stream<StreamEvent> sendToAiStream({
     required int chatId,
     required String userMessage,
+    double temperature = 0.7,
   }) async* {
     // Save user message first
     final userMsgId = await _saveMessage(
@@ -182,7 +184,7 @@ class ChatRepositoryImpl implements ChatRepository {
       final request = ChatRequest(
         model: _aiService.model,
         messages: requestMessages,
-        temperature: 0.7,
+        temperature: temperature,
         stream: true,
       );
 

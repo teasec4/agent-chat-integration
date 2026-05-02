@@ -24,19 +24,13 @@ class SettingsSidebar extends StatelessWidget {
       id: 'general',
       title: 'General',
       icon: Icons.tune_rounded,
-      description: 'Appearance, language, defaults',
+      description: 'Appearance, defaults, version info',
     ),
     SettingsCategory(
       id: 'model',
       title: 'Model',
       icon: Icons.smart_toy_outlined,
       description: 'AI model, endpoint, parameters',
-    ),
-    SettingsCategory(
-      id: 'about',
-      title: 'About',
-      icon: Icons.info_outline_rounded,
-      description: 'Version, licenses, credits',
     ),
   ];
 

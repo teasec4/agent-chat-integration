@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:gemma4/data/implementation/chat_repository_impl.dart';
 import 'package:gemma4/data/implementation/list_chat_repository_impl.dart';
+import 'package:gemma4/data/implementation/settings_repository_impl.dart';
 import 'package:gemma4/presentation/view_models/list_chat_view_model.dart';
+import 'package:gemma4/presentation/view_models/settings_view_model.dart';
 import 'package:gemma4/providers/isar_db_provider.dart';
 import 'package:gemma4/router/router.dart';
 import 'package:gemma4/presentation/view_models/chat_view_model.dart';
@@ -12,7 +14,22 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final isar = await IsarDbProvider().open();
-  final aiService = GemmaApiService();
+
+  // -- Settings (loads before AiService so baseUrl/model are ready) --
+  final settingsRepo = SettingsRepositoryImpl(isar);
+  final settingsVm = SettingsViewModel(settingsRepo);
+  await settingsVm.ensureLoaded();
+
+  final aiService = GemmaApiService(
+    baseUrl: settingsVm.settings.baseUrl,
+    model: settingsVm.settings.modelName,
+  );
+
+  // Propagate settings changes to the running AiService
+  settingsVm.addListener(() {
+    aiService.baseUrl = settingsVm.settings.baseUrl;
+    aiService.model = settingsVm.settings.modelName;
+  });
 
   final chatRepository = ChatRepositoryImpl(
     aiService: aiService,
@@ -25,6 +42,7 @@ void main() async {
   final chatVm = ChatViewModel(
     chatRepository,
     aiService,
+    settingsVm,
     onTitleGenerated: () => listChatVm.loadChats(),
   );
 
@@ -36,6 +54,9 @@ void main() async {
         ),
         ChangeNotifierProvider<ListChatViewModel>(
           create: (_) => listChatVm = ListChatViewModel(listChatRepository),
+        ),
+        ChangeNotifierProvider.value(
+          value: settingsVm,
         ),
       ],
       child: MaterialApp.router(

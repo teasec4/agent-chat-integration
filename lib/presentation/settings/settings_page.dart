@@ -1,21 +1,7 @@
 import 'package:flutter/material.dart';
-
-// --- Model data struct (local state, no persistence) ---
-class _CustomModel {
-  final String id;
-  String name;
-  String baseUrl;
-  String modelName;
-  int maxTokens = 4096;
-  double temperature = 0.7;
-
-  _CustomModel({
-    required this.id,
-    this.name = '',
-    this.baseUrl = 'http://localhost:1234/v1',
-    this.modelName = 'google/gemma-4-e4b',
-  });
-}
+import 'package:gemma4/data/db_models/db_entries.dart';
+import 'package:gemma4/presentation/view_models/settings_view_model.dart';
+import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {
   final String category;
@@ -27,29 +13,34 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  // --- General state ---
-  bool _darkMode = false;
-  bool _autoTitle = true;
-  bool _streamResponses = true;
-  String _language = 'System';
+  late TextEditingController _baseUrlController;
+  late TextEditingController _modelNameController;
+  late TextEditingController _newNameController;
+  late TextEditingController _newUrlController;
+  late TextEditingController _newModelNameController;
 
-  // --- Model state ---
-  final _baseUrlController = TextEditingController(text: 'http://localhost:1234/v1');
-  final _modelNameController = TextEditingController(text: 'google/gemma-4-e4b');
-  final _newBaseUrlController = TextEditingController();
-  final _newModelNameController = TextEditingController();
-  final _newCustomNameController = TextEditingController();
-  double _temperature = 0.7;
-  int _maxTokens = 4096;
-  final List<_CustomModel> _customModels = [];
+  @override
+  void initState() {
+    super.initState();
+    _initControllers();
+  }
+
+  void _initControllers() {
+    final vm = context.read<SettingsViewModel>();
+    _baseUrlController = TextEditingController(text: vm.settings.baseUrl);
+    _modelNameController = TextEditingController(text: vm.settings.modelName);
+    _newNameController = TextEditingController();
+    _newUrlController = TextEditingController(text: vm.settings.baseUrl);
+    _newModelNameController = TextEditingController();
+  }
 
   @override
   void dispose() {
     _baseUrlController.dispose();
     _modelNameController.dispose();
-    _newBaseUrlController.dispose();
+    _newNameController.dispose();
+    _newUrlController.dispose();
     _newModelNameController.dispose();
-    _newCustomNameController.dispose();
     super.dispose();
   }
 
@@ -60,8 +51,6 @@ class _SettingsPageState extends State<SettingsPage> {
         return _buildGeneralSettings();
       case 'model':
         return _buildModelSettings();
-      case 'about':
-        return _buildAboutPage();
       default:
         return _buildEmpty();
     }
@@ -72,35 +61,12 @@ class _SettingsPageState extends State<SettingsPage> {
   // ===================================================================
   Widget _buildGeneralSettings() {
     final theme = Theme.of(context);
+    final settingsVm = context.watch<SettingsViewModel>();
+    final s = settingsVm.settings;
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildSectionHeader(theme, 'Appearance'),
-        const SizedBox(height: 8),
-        Card(
-          child: Column(
-            children: [
-              SwitchListTile(
-                title: const Text('Dark Mode'),
-                subtitle: const Text('Use dark theme'),
-                value: _darkMode,
-                onChanged: (v) => setState(() => _darkMode = v),
-                secondary: Icon(
-                  _darkMode ? Icons.dark_mode : Icons.light_mode,
-                ),
-              ),
-              const Divider(height: 1, indent: 72),
-              ListTile(
-                leading: const Icon(Icons.language_outlined),
-                title: const Text('Language'),
-                subtitle: Text(_language),
-                trailing: const Icon(Icons.chevron_right, size: 20),
-                onTap: () => _pickLanguage(),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
         _buildSectionHeader(theme, 'Chat Defaults'),
         const SizedBox(height: 8),
         Card(
@@ -109,45 +75,87 @@ class _SettingsPageState extends State<SettingsPage> {
               SwitchListTile(
                 title: const Text('Auto-generate titles'),
                 subtitle: const Text('Create chat title from first message'),
-                value: _autoTitle,
-                onChanged: (v) => setState(() => _autoTitle = v),
+                value: s.autoTitle,
+                onChanged: (v) {
+                  final updated = s..autoTitle = v;
+                  settingsVm.saveSettings(updated);
+                },
                 secondary: const Icon(Icons.auto_awesome_outlined),
               ),
               const Divider(height: 1, indent: 72),
               SwitchListTile(
                 title: const Text('Stream responses'),
                 subtitle: const Text('Show text as it arrives'),
-                value: _streamResponses,
-                onChanged: (v) => setState(() => _streamResponses = v),
+                value: s.streamResponses,
+                onChanged: (v) {
+                  final updated = s..streamResponses = v;
+                  settingsVm.saveSettings(updated);
+                },
                 secondary: const Icon(Icons.stream_outlined),
               ),
             ],
           ),
         ),
-      ],
-    );
-  }
 
-  void _pickLanguage() {
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: ['System', 'English', 'Русский', '中文']
-              .map((lang) => ListTile(
-                    title: Text(lang),
-                    trailing: _language == lang
-                        ? const Icon(Icons.check, size: 18)
-                        : null,
-                    onTap: () {
-                      setState(() => _language = lang);
-                      Navigator.pop(ctx);
-                    },
-                  ))
-              .toList(),
+        // --- About ---
+        const SizedBox(height: 32),
+        _buildSectionHeader(theme, 'About'),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.smart_toy_outlined,
+                  size: 56,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Mini AI Chat',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Version 1.0.0',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'A local AI chat app powered by\nLM Studio & Flutter',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                OutlinedButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.code_outlined, size: 18),
+                  label: const Text('Open Source Licenses'),
+                ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.bug_report_outlined, size: 16),
+                  label: const Text('Report an Issue'),
+                ),
+              ],
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -156,6 +164,9 @@ class _SettingsPageState extends State<SettingsPage> {
   // ===================================================================
   Widget _buildModelSettings() {
     final theme = Theme.of(context);
+    final settingsVm = context.watch<SettingsViewModel>();
+    final s = settingsVm.settings;
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -169,14 +180,17 @@ class _SettingsPageState extends State<SettingsPage> {
               controller: _baseUrlController,
               decoration: const InputDecoration(
                 labelText: 'Base URL',
-                hintText: 'http://localhost:1234/v1',
+                hintText: 'http://localhost:1234',
                 prefixIcon: Icon(Icons.link_outlined, size: 20),
                 border: OutlineInputBorder(),
                 isDense: true,
-                helperText: 'OpenAI-compatible API endpoint',
+                helperText: 'OpenAI-compatible API endpoint (without /v1)',
               ),
               style: const TextStyle(fontSize: 14, fontFamily: 'monospace'),
-              onChanged: (_) => setState(() {}),
+              onChanged: (v) {
+                final updated = s..baseUrl = v.trim();
+                settingsVm.saveSettings(updated);
+              },
             ),
           ),
         ),
@@ -201,7 +215,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     helperText: 'Model ID from the API',
                   ),
                   style: const TextStyle(fontSize: 14, fontFamily: 'monospace'),
-                  onChanged: (_) => setState(() {}),
+                  onChanged: (v) {
+                    final updated = s..modelName = v.trim();
+                    settingsVm.saveSettings(updated);
+                  },
                 ),
               ],
             ),
@@ -232,7 +249,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        _temperature.toStringAsFixed(1),
+                        s.temperature.toStringAsFixed(1),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -243,12 +260,15 @@ class _SettingsPageState extends State<SettingsPage> {
                   ],
                 ),
                 Slider(
-                  value: _temperature,
+                  value: s.temperature,
                   min: 0.0,
                   max: 2.0,
                   divisions: 20,
-                  label: _temperature.toStringAsFixed(1),
-                  onChanged: (v) => setState(() => _temperature = v),
+                  label: s.temperature.toStringAsFixed(1),
+                  onChanged: (v) {
+                    final updated = s..temperature = v;
+                    settingsVm.saveSettings(updated);
+                  },
                 ),
                 const SizedBox(height: 8),
 
@@ -262,7 +282,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     SizedBox(
                       width: 90,
                       child: TextField(
-                        controller: TextEditingController(text: _maxTokens.toString()),
+                        controller: TextEditingController(text: s.maxTokens.toString()),
                         textAlign: TextAlign.center,
                         keyboardType: TextInputType.number,
                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
@@ -276,7 +296,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         onChanged: (v) {
                           final parsed = int.tryParse(v);
                           if (parsed != null && parsed > 0) {
-                            setState(() => _maxTokens = parsed);
+                            final updated = s..maxTokens = parsed;
+                            settingsVm.saveSettings(updated);
                           }
                         },
                       ),
@@ -289,7 +310,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         const SizedBox(height: 24),
 
-        // --- Custom Models ---
+        // --- Saved Models ---
         _buildSectionHeader(theme, 'Saved Models'),
         const SizedBox(height: 4),
         Text(
@@ -298,15 +319,15 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         const SizedBox(height: 8),
 
-        // List of saved models
-        ..._customModels.map((model) => Padding(
+        // List of saved presets
+        ...settingsVm.presets.map((preset) => Padding(
               padding: const EdgeInsets.only(bottom: 6),
-              child: _buildCustomModelCard(model),
+              child: _buildPresetCard(preset, settingsVm),
             )),
 
         // Add new model button
         OutlinedButton.icon(
-          onPressed: _showAddModelDialog,
+          onPressed: () => _showAddPresetDialog(settingsVm),
           icon: const Icon(Icons.add, size: 18),
           label: const Text('Add Model'),
           style: OutlinedButton.styleFrom(
@@ -329,57 +350,67 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildCustomModelCard(_CustomModel model) {
+  Widget _buildPresetCard(CustomModelPreset preset, SettingsViewModel settingsVm) {
     final theme = Theme.of(context);
+    final isActive = preset.baseUrl == settingsVm.settings.baseUrl &&
+        preset.modelName == settingsVm.settings.modelName;
     return Card(
       child: ListTile(
         dense: true,
         leading: CircleAvatar(
           radius: 14,
-          backgroundColor: theme.colorScheme.primaryContainer,
-          child: Icon(Icons.smart_toy_outlined, size: 16, color: theme.colorScheme.primary),
+          backgroundColor: isActive
+              ? theme.colorScheme.primary
+              : theme.colorScheme.primaryContainer,
+          child: Icon(
+            Icons.smart_toy_outlined,
+            size: 16,
+            color: isActive ? theme.colorScheme.onPrimary : theme.colorScheme.primary,
+          ),
         ),
         title: Text(
-          model.name.isNotEmpty ? model.name : model.modelName,
+          preset.name.isNotEmpty ? preset.name : preset.modelName,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
         subtitle: Text(
-          model.modelName,
+          preset.modelName,
           style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant, fontFamily: 'monospace'),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.play_arrow_rounded, size: 20),
+              icon: Icon(Icons.play_arrow_rounded, size: 20, color: theme.colorScheme.primary),
               tooltip: 'Use this model',
               visualDensity: VisualDensity.compact,
               onPressed: () {
-                _baseUrlController.text = model.baseUrl;
-                _modelNameController.text = model.modelName;
-                _temperature = model.temperature;
-                _maxTokens = model.maxTokens;
-                setState(() {});
+                final s = settingsVm.settings;
+                final updated = s
+                  ..baseUrl = preset.baseUrl
+                  ..modelName = preset.modelName
+                  ..temperature = preset.temperature
+                  ..maxTokens = preset.maxTokens;
+                _baseUrlController.text = preset.baseUrl;
+                _modelNameController.text = preset.modelName;
+                settingsVm.saveSettings(updated);
               },
             ),
             IconButton(
               icon: Icon(Icons.delete_outline, size: 20, color: theme.colorScheme.error),
               tooltip: 'Remove',
               visualDensity: VisualDensity.compact,
-              onPressed: () {
-                setState(() => _customModels.remove(model));
-              },
+              onPressed: () => settingsVm.deletePreset(preset.id),
             ),
           ],
         ),
-        onTap: () => _showEditModelDialog(model),
+        onTap: () => _showEditPresetDialog(preset, settingsVm),
       ),
     );
   }
 
-  void _showAddModelDialog() {
-    _newCustomNameController.clear();
-    _newBaseUrlController.text = 'http://localhost:1234/v1';
+  void _showAddPresetDialog(SettingsViewModel settingsVm) {
+    _newNameController.clear();
+    _newUrlController.text = settingsVm.settings.baseUrl;
     _newModelNameController.clear();
     showDialog(
       context: context,
@@ -390,7 +421,7 @@ class _SettingsPageState extends State<SettingsPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: _newCustomNameController,
+                controller: _newNameController,
                 decoration: const InputDecoration(
                   labelText: 'Display Name',
                   hintText: 'e.g. Local LLM',
@@ -400,10 +431,10 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               const SizedBox(height: 12),
               TextField(
-                controller: _newBaseUrlController,
+                controller: _newUrlController,
                 decoration: const InputDecoration(
                   labelText: 'Base URL',
-                  hintText: 'http://localhost:1234/v1',
+                  hintText: 'http://localhost:1234',
                   border: OutlineInputBorder(),
                   isDense: true,
                   prefixIcon: Icon(Icons.link_outlined, size: 20),
@@ -432,18 +463,15 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           FilledButton(
             onPressed: () {
-              final name = _newCustomNameController.text.trim();
-              final url = _newBaseUrlController.text.trim();
+              final name = _newNameController.text.trim();
+              final url = _newUrlController.text.trim();
               final modelName = _newModelNameController.text.trim();
               if (url.isNotEmpty && modelName.isNotEmpty) {
-                setState(() {
-                  _customModels.add(_CustomModel(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    name: name,
-                    baseUrl: url,
-                    modelName: modelName,
-                  ));
-                });
+                final preset = CustomModelPreset()
+                  ..name = name
+                  ..baseUrl = url
+                  ..modelName = modelName;
+                settingsVm.savePreset(preset);
               }
               Navigator.pop(ctx);
             },
@@ -454,10 +482,10 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showEditModelDialog(_CustomModel model) {
-    final nameCtrl = TextEditingController(text: model.name);
-    final urlCtrl = TextEditingController(text: model.baseUrl);
-    final modelCtrl = TextEditingController(text: model.modelName);
+  void _showEditPresetDialog(CustomModelPreset preset, SettingsViewModel settingsVm) {
+    final nameCtrl = TextEditingController(text: preset.name);
+    final urlCtrl = TextEditingController(text: preset.baseUrl);
+    final modelCtrl = TextEditingController(text: preset.modelName);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -506,76 +534,15 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           FilledButton(
             onPressed: () {
-              model.name = nameCtrl.text.trim();
-              model.baseUrl = urlCtrl.text.trim();
-              model.modelName = modelCtrl.text.trim();
-              setState(() {});
+              preset.name = nameCtrl.text.trim();
+              preset.baseUrl = urlCtrl.text.trim();
+              preset.modelName = modelCtrl.text.trim();
+              settingsVm.savePreset(preset);
               Navigator.pop(ctx);
             },
             child: const Text('Save'),
           ),
         ],
-      ),
-    );
-  }
-
-  // ===================================================================
-  // ABOUT PAGE
-  // ===================================================================
-  Widget _buildAboutPage() {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.smart_toy_outlined,
-              size: 72,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Mini AI Chat',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Version 1.0.0',
-              style: TextStyle(
-                fontSize: 14,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'A local AI chat app powered by\nLM Studio & Flutter',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 32),
-            OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.code_outlined, size: 18),
-              label: const Text('Open Source Licenses'),
-            ),
-            const SizedBox(height: 12),
-            TextButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.bug_report_outlined, size: 16),
-              label: const Text('Report an Issue'),
-            ),
-          ],
-        ),
       ),
     );
   }

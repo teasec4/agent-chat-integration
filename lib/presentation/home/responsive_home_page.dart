@@ -296,7 +296,7 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
   }
 
   String _categoryTitle(String id) {
-    const titles = {'general': 'General', 'model': 'Model', 'about': 'About'};
+    const titles = {'general': 'General', 'model': 'Model'};
     return titles[id] ?? 'Settings';
   }
 

@@ -13,9 +13,8 @@ class IsarDbProvider{
   
   static const List<CollectionSchema> schemas = [
     ChatEntrySchema,
-    MessageSchema
+    MessageSchema,
+    AppSettingsSchema,
+    CustomModelPresetSchema,
   ];
 }
-
-
-

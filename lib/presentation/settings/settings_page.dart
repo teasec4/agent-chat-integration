@@ -72,65 +72,59 @@ class _SettingsPageState extends State<SettingsPage> {
   // ===================================================================
   Widget _buildGeneralSettings() {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('General Settings'),
-        automaticallyImplyLeading: false,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildSectionHeader(theme, 'Appearance'),
-          const SizedBox(height: 8),
-          Card(
-            child: Column(
-              children: [
-                SwitchListTile(
-                  title: const Text('Dark Mode'),
-                  subtitle: const Text('Use dark theme'),
-                  value: _darkMode,
-                  onChanged: (v) => setState(() => _darkMode = v),
-                  secondary: Icon(
-                    _darkMode ? Icons.dark_mode : Icons.light_mode,
-                  ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildSectionHeader(theme, 'Appearance'),
+        const SizedBox(height: 8),
+        Card(
+          child: Column(
+            children: [
+              SwitchListTile(
+                title: const Text('Dark Mode'),
+                subtitle: const Text('Use dark theme'),
+                value: _darkMode,
+                onChanged: (v) => setState(() => _darkMode = v),
+                secondary: Icon(
+                  _darkMode ? Icons.dark_mode : Icons.light_mode,
                 ),
-                const Divider(height: 1, indent: 72),
-                ListTile(
-                  leading: const Icon(Icons.language_outlined),
-                  title: const Text('Language'),
-                  subtitle: Text(_language),
-                  trailing: const Icon(Icons.chevron_right, size: 20),
-                  onTap: () => _pickLanguage(),
-                ),
-              ],
-            ),
+              ),
+              const Divider(height: 1, indent: 72),
+              ListTile(
+                leading: const Icon(Icons.language_outlined),
+                title: const Text('Language'),
+                subtitle: Text(_language),
+                trailing: const Icon(Icons.chevron_right, size: 20),
+                onTap: () => _pickLanguage(),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          _buildSectionHeader(theme, 'Chat Defaults'),
-          const SizedBox(height: 8),
-          Card(
-            child: Column(
-              children: [
-                SwitchListTile(
-                  title: const Text('Auto-generate titles'),
-                  subtitle: const Text('Create chat title from first message'),
-                  value: _autoTitle,
-                  onChanged: (v) => setState(() => _autoTitle = v),
-                  secondary: const Icon(Icons.auto_awesome_outlined),
-                ),
-                const Divider(height: 1, indent: 72),
-                SwitchListTile(
-                  title: const Text('Stream responses'),
-                  subtitle: const Text('Show text as it arrives'),
-                  value: _streamResponses,
-                  onChanged: (v) => setState(() => _streamResponses = v),
-                  secondary: const Icon(Icons.stream_outlined),
-                ),
-              ],
-            ),
+        ),
+        const SizedBox(height: 24),
+        _buildSectionHeader(theme, 'Chat Defaults'),
+        const SizedBox(height: 8),
+        Card(
+          child: Column(
+            children: [
+              SwitchListTile(
+                title: const Text('Auto-generate titles'),
+                subtitle: const Text('Create chat title from first message'),
+                value: _autoTitle,
+                onChanged: (v) => setState(() => _autoTitle = v),
+                secondary: const Icon(Icons.auto_awesome_outlined),
+              ),
+              const Divider(height: 1, indent: 72),
+              SwitchListTile(
+                title: const Text('Stream responses'),
+                subtitle: const Text('Show text as it arrives'),
+                value: _streamResponses,
+                onChanged: (v) => setState(() => _streamResponses = v),
+                secondary: const Icon(Icons.stream_outlined),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -162,182 +156,176 @@ class _SettingsPageState extends State<SettingsPage> {
   // ===================================================================
   Widget _buildModelSettings() {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Model Settings'),
-        automaticallyImplyLeading: false,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // --- Active Endpoint ---
-          _buildSectionHeader(theme, 'Endpoint'),
-          const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: TextField(
-                controller: _baseUrlController,
-                decoration: const InputDecoration(
-                  labelText: 'Base URL',
-                  hintText: 'http://localhost:1234/v1',
-                  prefixIcon: Icon(Icons.link_outlined, size: 20),
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                  helperText: 'OpenAI-compatible API endpoint',
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // --- Active Endpoint ---
+        _buildSectionHeader(theme, 'Endpoint'),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TextField(
+              controller: _baseUrlController,
+              decoration: const InputDecoration(
+                labelText: 'Base URL',
+                hintText: 'http://localhost:1234/v1',
+                prefixIcon: Icon(Icons.link_outlined, size: 20),
+                border: OutlineInputBorder(),
+                isDense: true,
+                helperText: 'OpenAI-compatible API endpoint',
+              ),
+              style: const TextStyle(fontSize: 14, fontFamily: 'monospace'),
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // --- Active Model ---
+        _buildSectionHeader(theme, 'Model'),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _modelNameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Model Name',
+                    hintText: 'google/gemma-4-e4b',
+                    prefixIcon: Icon(Icons.smart_toy_outlined, size: 20),
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                    helperText: 'Model ID from the API',
+                  ),
+                  style: const TextStyle(fontSize: 14, fontFamily: 'monospace'),
+                  onChanged: (_) => setState(() {}),
                 ),
-                style: const TextStyle(fontSize: 14, fontFamily: 'monospace'),
-                onChanged: (_) => setState(() {}),
-              ),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
+        ),
+        const SizedBox(height: 24),
 
-          // --- Active Model ---
-          _buildSectionHeader(theme, 'Model'),
-          const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _modelNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Model Name',
-                      hintText: 'google/gemma-4-e4b',
-                      prefixIcon: Icon(Icons.smart_toy_outlined, size: 20),
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                      helperText: 'Model ID from the API',
+        // --- Parameters ---
+        _buildSectionHeader(theme, 'Parameters'),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Temperature slider
+                Row(
+                  children: [
+                    const Icon(Icons.thermostat_outlined, size: 20),
+                    const SizedBox(width: 12),
+                    Text('Temperature', style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface)),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        _temperature.toStringAsFixed(1),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
                     ),
-                    style: const TextStyle(fontSize: 14, fontFamily: 'monospace'),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
+                  ],
+                ),
+                Slider(
+                  value: _temperature,
+                  min: 0.0,
+                  max: 2.0,
+                  divisions: 20,
+                  label: _temperature.toStringAsFixed(1),
+                  onChanged: (v) => setState(() => _temperature = v),
+                ),
+                const SizedBox(height: 8),
 
-          // --- Parameters ---
-          _buildSectionHeader(theme, 'Parameters'),
-          const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Temperature slider
-                  Row(
-                    children: [
-                      const Icon(Icons.thermostat_outlined, size: 20),
-                      const SizedBox(width: 12),
-                      Text('Temperature', style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface)),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          _temperature.toStringAsFixed(1),
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.primary,
+                // Max tokens
+                Row(
+                  children: [
+                    const Icon(Icons.format_list_numbered_outlined, size: 20),
+                    const SizedBox(width: 12),
+                    Text('Max Tokens', style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface)),
+                    const Spacer(),
+                    SizedBox(
+                      width: 90,
+                      child: TextField(
+                        controller: TextEditingController(text: _maxTokens.toString()),
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
                           ),
                         ),
+                        onChanged: (v) {
+                          final parsed = int.tryParse(v);
+                          if (parsed != null && parsed > 0) {
+                            setState(() => _maxTokens = parsed);
+                          }
+                        },
                       ),
-                    ],
-                  ),
-                  Slider(
-                    value: _temperature,
-                    min: 0.0,
-                    max: 2.0,
-                    divisions: 20,
-                    label: _temperature.toStringAsFixed(1),
-                    onChanged: (v) => setState(() => _temperature = v),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Max tokens
-                  Row(
-                    children: [
-                      const Icon(Icons.format_list_numbered_outlined, size: 20),
-                      const SizedBox(width: 12),
-                      Text('Max Tokens', style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface)),
-                      const Spacer(),
-                      SizedBox(
-                        width: 90,
-                        child: TextField(
-                          controller: TextEditingController(text: _maxTokens.toString()),
-                          textAlign: TextAlign.center,
-                          keyboardType: TextInputType.number,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                          decoration: InputDecoration(
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                          onChanged: (v) {
-                            final parsed = int.tryParse(v);
-                            if (parsed != null && parsed > 0) {
-                              setState(() => _maxTokens = parsed);
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
+        ),
+        const SizedBox(height: 24),
 
-          // --- Custom Models ---
-          _buildSectionHeader(theme, 'Saved Models'),
-          const SizedBox(height: 4),
-          Text(
-            'Add custom model configurations to quickly switch between endpoints.',
-            style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+        // --- Custom Models ---
+        _buildSectionHeader(theme, 'Saved Models'),
+        const SizedBox(height: 4),
+        Text(
+          'Add custom model configurations to quickly switch between endpoints.',
+          style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 8),
+
+        // List of saved models
+        ..._customModels.map((model) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: _buildCustomModelCard(model),
+            )),
+
+        // Add new model button
+        OutlinedButton.icon(
+          onPressed: _showAddModelDialog,
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('Add Model'),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(44),
           ),
-          const SizedBox(height: 8),
+        ),
 
-          // List of saved models
-          ..._customModels.map((model) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: _buildCustomModelCard(model),
-              )),
+        const SizedBox(height: 32),
 
-          // Add new model button
-          OutlinedButton.icon(
-            onPressed: _showAddModelDialog,
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('Add Model'),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(44),
-            ),
+        // Test connection button
+        Center(
+          child: FilledButton.tonalIcon(
+            onPressed: () {},
+            icon: const Icon(Icons.check_circle_outline, size: 18),
+            label: const Text('Test Connection'),
           ),
-
-          const SizedBox(height: 32),
-
-          // Test connection button
-          Center(
-            child: FilledButton.tonalIcon(
-              onPressed: () {},
-              icon: const Icon(Icons.check_circle_outline, size: 18),
-              label: const Text('Test Connection'),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 
@@ -536,63 +524,57 @@ class _SettingsPageState extends State<SettingsPage> {
   // ===================================================================
   Widget _buildAboutPage() {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('About'),
-        automaticallyImplyLeading: false,
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.smart_toy_outlined,
-                size: 72,
-                color: theme.colorScheme.primary,
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.smart_toy_outlined,
+              size: 72,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Mini AI Chat',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface,
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Mini AI Chat',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
-                ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Version 1.0.0',
+              style: TextStyle(
+                fontSize: 14,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Version 1.0.0',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'A local AI chat app powered by\nLM Studio & Flutter',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
-              const SizedBox(height: 24),
-              Text(
-                'A local AI chat app powered by\nLM Studio & Flutter',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 32),
-              OutlinedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.code_outlined, size: 18),
-                label: const Text('Open Source Licenses'),
-              ),
-              const SizedBox(height: 12),
-              TextButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.bug_report_outlined, size: 16),
-                label: const Text('Report an Issue'),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 32),
+            OutlinedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.code_outlined, size: 18),
+              label: const Text('Open Source Licenses'),
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.bug_report_outlined, size: 16),
+              label: const Text('Report an Issue'),
+            ),
+          ],
         ),
       ),
     );

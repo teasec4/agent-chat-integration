@@ -41,10 +41,13 @@ class _ChatInputState extends State<ChatInput> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        border: Border.all(color: Colors.grey.shade300),
+        color: theme.cardColor,
+        border: Border.all(color: colors.outlineVariant),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -65,33 +68,37 @@ class _ChatInputState extends State<ChatInput> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.smart_toy_outlined, size: 14, color: Colors.grey[600]),
+                        Icon(Icons.smart_toy_outlined, size: 14, color: colors.onSurfaceVariant),
                         const SizedBox(width: 4),
                         Text(
                           widget.modelName.isEmpty ? 'Model' : widget.modelName,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: colors.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         const SizedBox(width: 2),
-                        Icon(Icons.arrow_drop_down, size: 16, color: Colors.grey[500]),
+                        Icon(Icons.arrow_drop_down, size: 16, color: colors.onSurfaceVariant),
                       ],
                     ),
                   ),
                 ),
                 const Spacer(),
                 if (widget.totalTokens > 0)
-                  Text(
-                    'Tokens: ${widget.totalTokens} / ${ChatInput.maxContextLength}',
-                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                  Flexible(
+                    child: Text(
+                      'Tokens: ${widget.totalTokens} / ${ChatInput.maxContextLength}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11, color: colors.onSurfaceVariant),
+                    ),
                   ),
               ],
             ),
           ),
           // Divider
-          Container(height: 1, color: Colors.grey.shade300),
+          Container(height: 1, color: colors.outlineVariant),
           // Input row with send button inside
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),

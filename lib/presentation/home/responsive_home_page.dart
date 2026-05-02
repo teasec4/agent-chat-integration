@@ -245,6 +245,9 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
           return ChatPage(
             chatId: _selectedChatId!,
             key: ValueKey(_selectedChatId),
+            onOpenChatList: () {
+              setState(() => _sidebarVisible = true);
+            },
           );
         }
         return _buildEmptyState(

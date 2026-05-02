@@ -23,13 +23,16 @@ class ChatBubble extends StatelessWidget {
     return _buildAiMessage(context, theme);
   }
 
+  double _maxBubbleWidth(BuildContext context) {
+    return MediaQuery.of(context).size.width * 0.80;
+  }
+
   Widget _buildUserBubble(BuildContext context, ThemeData theme) {
+    final maxW = _maxBubbleWidth(context);
     return Align(
       alignment: Alignment.centerRight,
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.80,
-        ),
+        constraints: BoxConstraints(maxWidth: maxW),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -69,9 +72,12 @@ class ChatBubble extends StatelessWidget {
   }
 
   Widget _buildAiMessage(BuildContext context, ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    final maxW = _maxBubbleWidth(context);
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxW),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         if (showSender)
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 2),
@@ -92,8 +98,9 @@ class ChatBubble extends StatelessWidget {
             styleSheet: _aiStyleSheet(context, theme),
           ),
         ),
-      ],
-    );
+      ], // closes children
+      ), // closes Column
+    ); // closes ConstrainedBox
   }
 
   MarkdownStyleSheet _aiStyleSheet(BuildContext context, ThemeData theme) {

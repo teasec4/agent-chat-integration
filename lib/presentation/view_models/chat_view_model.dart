@@ -32,6 +32,8 @@ class ChatViewModel extends ChangeNotifier {
   int _promptTokens = 0;
   int _completionTokens = 0;
   int _totalTokens = 0;
+  int _maxContext = 131072;
+  String _lastLoadedModel = '';
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -40,6 +42,7 @@ class ChatViewModel extends ChangeNotifier {
   int get totalTokens => _totalTokens;
   TokenCount get tokenCount =>
       TokenCount(prompt: _promptTokens, completion: _completionTokens, total: _totalTokens);
+  int get maxContext => _maxContext;
   Chat? get currentChat => _currentChat;
   String get model => _chatRepository.model;
   List<Message> get conversationHistory =>
@@ -49,6 +52,7 @@ class ChatViewModel extends ChangeNotifier {
     _errorMessage = null;
     _titleGenerated = false;
     _currentChat = await _chatRepository.getChatById(chatId);
+    await _refreshModelContext();
     debugPrint('[loadChat] chatId=$chatId, found=${_currentChat != null} id=${_currentChat?.id}');
     if (_currentChat != null) {
       final messages = await _chatRepository.getMessagesForChat(_currentChat!.id);
@@ -179,5 +183,13 @@ class ChatViewModel extends ChangeNotifier {
       // Title generation is non-critical — silently ignore failures
       debugPrint('[titleGen] failed: $e');
     }
+  }
+
+  Future<void> _refreshModelContext() async {
+    final currentModel = _chatRepository.model;
+    if (currentModel == _lastLoadedModel) return;
+    _lastLoadedModel = currentModel;
+    _maxContext = await _aiService.getModelContext();
+    notifyListeners();
   }
 }

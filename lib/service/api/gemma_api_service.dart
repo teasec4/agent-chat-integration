@@ -45,6 +45,33 @@ class GemmaApiService implements AiService {
   }
 
   @override
+  Future<int> getModelContext() async {
+    try {
+      final url = Uri.parse('$baseUrl/v1/models');
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) return 131072;
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final models = body['data'] as List? ?? [];
+      for (final m in models) {
+        final id = m['id'] as String? ?? '';
+        if (id == model) {
+          final context = m['max_context_length'] as int?;
+          if (context != null && context > 0) return context;
+          break;
+        }
+      }
+    } catch (_) {
+      // API unavailable — use fallback
+    }
+    return 131072;
+  }
+
+  @override
   Stream<StreamEvent> streamChat(ChatRequest request) async* {
     final url = Uri.parse('$baseUrl/v1/chat/completions');
 

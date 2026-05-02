@@ -6,4 +6,8 @@ abstract class AiService {
   String get model;
   Future<ChatResponse> getAiResponse(ChatRequest request);
   Stream<StreamEvent> streamChat(ChatRequest request);
+
+  /// Get the model's maximum context window (in tokens).
+  /// Falls back to 131072 if the API doesn't provide this info.
+  Future<int> getModelContext();
 }

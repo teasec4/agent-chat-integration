@@ -163,6 +163,25 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
       );
     }
 
+    // When a settings category is selected, show full-screen with AppBar
+    if (_selectedSettingsCategory != null) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) setState(() => _selectedSettingsCategory = null);
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(_categoryTitle(_selectedSettingsCategory!)),
+          ),
+          body: SettingsPage(
+            category: _selectedSettingsCategory!,
+            key: ValueKey(_selectedSettingsCategory),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: _buildNarrowPage(),
       bottomNavigationBar: NavigationBar(
@@ -201,19 +220,7 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
       case ActiveTab.settings:
         return SettingsSidebar(
           activeCategory: _selectedSettingsCategory,
-          onCategorySelected: (id) {
-            _selectSettingsCategory(id);
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => Scaffold(
-                  appBar: AppBar(
-                    title: Text(_categoryTitle(id)),
-                  ),
-                  body: SettingsPage(category: id),
-                ),
-              ),
-            );
-          },
+          onCategorySelected: _selectSettingsCategory,
         );
     }
   }

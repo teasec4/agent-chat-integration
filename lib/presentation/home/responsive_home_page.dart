@@ -17,12 +17,15 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
   ActiveTab _activeTab = ActiveTab.chat;
   int? _selectedChatId;
   String? _selectedSettingsCategory;
-  bool _sidebarVisible = false;
+  bool _sidebarVisible = true;
+  bool _wasWide = true;
 
   void _selectChat(Chat chat) {
     setState(() {
       _selectedChatId = chat.id;
-      _sidebarVisible = false;
+      if (MediaQuery.of(context).size.width < 768) {
+        _sidebarVisible = false;
+      }
     });
   }
 
@@ -39,7 +42,9 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
   void _selectSettingsCategory(String id) {
     setState(() {
       _selectedSettingsCategory = id;
-      _sidebarVisible = false;
+      if (MediaQuery.of(context).size.width < 768) {
+        _sidebarVisible = false;
+      }
     });
   }
 
@@ -48,7 +53,12 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        if (width >= 768) return _buildWideLayout();
+        final isWide = width >= 768;
+        if (_wasWide && !isWide) {
+          _sidebarVisible = false;
+        }
+        _wasWide = isWide;
+        if (isWide) return _buildWideLayout();
         if (width >= 480) return _buildMidLayout();
         return _buildNarrowLayout();
       },
@@ -235,6 +245,7 @@ class _ResponsiveHomePageState extends State<ResponsiveHomePage> {
         return ChatSidebar(
           activeChatId: _selectedChatId,
           onChatSelected: _selectChat,
+          onToggleSidebar: _toggleSidebar,
         );
       case ActiveTab.settings:
         return SettingsSidebar(

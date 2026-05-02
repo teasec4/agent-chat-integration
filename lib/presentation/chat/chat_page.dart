@@ -74,14 +74,6 @@ class _ChatPageState extends State<ChatPage> {
     }
 
     return Scaffold(
-      floatingActionButton: widget.onOpenChatList != null
-          ? FloatingActionButton.small(
-              onPressed: widget.onOpenChatList,
-              tooltip: 'Open chat list',
-              backgroundColor: colors.secondaryContainer,
-              child: Icon(Icons.chat_bubble_outline_rounded, size: 22, color: colors.onSecondaryContainer),
-            )
-          : null,
       body: Column(
             children: [
               if (chatViewModel.isLoading && chatViewModel.conversationHistory.isEmpty)

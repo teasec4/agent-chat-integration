@@ -1,5 +1,6 @@
 import 'package:gemma4/domain/entities/chat.dart';
 import 'package:gemma4/domain/entities/message.dart';
+import 'package:gemma4/domain/entities/stream_event.dart';
 
 abstract class ChatRepository {
   /// The AI model name in use.
@@ -8,6 +9,13 @@ abstract class ChatRepository {
   /// Send a user message to AI and get a response.
   /// Returns (aiContent, promptTokens, completionTokens, totalTokens).
   Future<(String, int, int, int)> sendToAi({
+    required int chatId,
+    required String userMessage,
+  });
+
+  /// Send a user message to AI and stream the response.
+  /// The stream yields content deltas and a final event with token usage.
+  Stream<StreamEvent> sendToAiStream({
     required int chatId,
     required String userMessage,
   });

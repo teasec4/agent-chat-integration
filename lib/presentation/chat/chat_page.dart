@@ -61,9 +61,9 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     final chatViewModel = context.watch<ChatViewModel>();
 
-    // Scroll to bottom only when new messages arrive
+    // Scroll to bottom when new messages arrive or during streaming
     final count = chatViewModel.conversationHistory.length;
-    if (count > _previousMessageCount) {
+    if (count > _previousMessageCount || (chatViewModel.isLoading && count > 0)) {
       _previousMessageCount = count;
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     }

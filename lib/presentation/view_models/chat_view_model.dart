@@ -60,29 +60,45 @@ class ChatViewModel extends ChangeNotifier {
     try {
       _conversationHistory.add(Message(role: Role.user, content: message));
 
-      final (
-        aiContent,
-        promptTokens,
-        completionTokens,
-        totalTokens,
-      ) = await _chatRepository.sendToAi(
+      // Add placeholder for streaming AI response
+      _conversationHistory.add(const Message(role: Role.assistant, content: ''));
+      notifyListeners();
+
+      final stream = _chatRepository.sendToAiStream(
         chatId: _currentChat!.id,
         userMessage: message,
       );
 
-      _promptTokens = promptTokens;
-      _completionTokens = completionTokens;
-      _totalTokens = totalTokens;
+      String fullResponse = '';
 
-      _conversationHistory.add(Message(role: Role.assistant, content: aiContent));
+      await for (final event in stream) {
+        if (event.delta.isNotEmpty) {
+          fullResponse += event.delta;
+          // Update the last message (AI placeholder) with accumulated content
+          _conversationHistory[_conversationHistory.length - 1] = Message(
+            role: Role.assistant,
+            content: fullResponse,
+          );
+          notifyListeners();
+        }
+
+        if (event.isFinished) {
+          _promptTokens = event.promptTokens;
+          _completionTokens = event.completionTokens;
+          _totalTokens = event.totalTokens;
+        }
+      }
 
       // Generate title on first AI response if still default
       if (!_titleGenerated && _currentChat?.title == _defaultTitle) {
         await _generateAndSetTitle(message);
       }
     } catch (e) {
-      // Remove the optimistically added user message
-      _conversationHistory.removeLast();
+      // Remove the optimistically added user message and partial AI message
+      _conversationHistory.removeRange(
+        _conversationHistory.length - 2,
+        _conversationHistory.length,
+      );
       _errorMessage = 'Error: ${e.toString().replaceFirst('Exception: ', '')}';
     } finally {
       _isLoading = false;

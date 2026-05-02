@@ -2,6 +2,7 @@ import 'package:gemma4/data/db_models/db_entries.dart' as db;
 import 'package:gemma4/data/models/chat_request.dart';
 import 'package:gemma4/domain/entities/chat.dart';
 import 'package:gemma4/domain/entities/message.dart';
+import 'package:gemma4/domain/entities/stream_event.dart';
 import 'package:gemma4/domain/repositories/chat_repository.dart';
 import 'package:gemma4/domain/services/ai_service.dart';
 import 'package:isar_community/isar.dart';
@@ -45,6 +46,18 @@ class ChatRepositoryImpl implements ChatRepository {
       message.id = newId;
     });
     return message.id;
+  }
+
+  Future<List<ApiMessage>> _buildChatMessages(int chatId) async {
+    final messages = await _isar.messages
+        .filter()
+        .chatIdEqualTo(chatId)
+        .sortByCreatedAt()
+        .findAll();
+
+    return messages
+        .map((m) => ApiMessage(role: m.role, content: m.content))
+        .toList();
   }
 
   // --- interface implementation ---
@@ -92,16 +105,7 @@ class ChatRepositoryImpl implements ChatRepository {
     );
 
     try {
-      // Build request with full history
-      final messages = await _isar.messages
-          .filter()
-          .chatIdEqualTo(chatId)
-          .sortByCreatedAt()
-          .findAll();
-
-      final chatMessages = messages
-          .map((m) => ApiMessage(role: m.role, content: m.content))
-          .toList();
+      final chatMessages = await _buildChatMessages(chatId);
 
       // Always prepend system prompt to ensure context is never empty
       final requestMessages = [
@@ -137,6 +141,83 @@ class ChatRepositoryImpl implements ChatRepository {
         response.promptTokens,
         response.completionTokens,
         response.totalTokens,
+      );
+    } catch (e) {
+      // Rollback: delete the orphan user message
+      await _isar.writeTxn(() async {
+        await _isar.messages.delete(userMsgId);
+      });
+      rethrow;
+    }
+  }
+
+  @override
+  Stream<StreamEvent> sendToAiStream({
+    required int chatId,
+    required String userMessage,
+  }) async* {
+    // Save user message first
+    final userMsgId = await _saveMessage(
+      chatId: chatId,
+      content: userMessage,
+      role: Role.user,
+    );
+
+    StringBuffer? fullAiContent;
+    int finalPromptTokens = 0;
+    int finalCompletionTokens = 0;
+    int finalTotalTokens = 0;
+
+    try {
+      final chatMessages = await _buildChatMessages(chatId);
+
+      final requestMessages = [
+        ApiMessage(
+          role: Role.system,
+          content: 'You are a helpful AI assistant.',
+        ),
+        ...chatMessages,
+      ];
+
+      final request = ChatRequest(
+        model: _aiService.model,
+        messages: requestMessages,
+        temperature: 0.7,
+        stream: true,
+      );
+
+      fullAiContent = StringBuffer();
+
+      // Stream the response from the AI service
+      await for (final event in _aiService.streamChat(request)) {
+        if (event.delta.isNotEmpty) {
+          fullAiContent.write(event.delta);
+          yield StreamEvent(delta: event.delta); // forward delta
+        }
+
+        if (event.isFinished) {
+          finalPromptTokens = event.promptTokens;
+          finalCompletionTokens = event.completionTokens;
+          finalTotalTokens = event.totalTokens;
+        }
+      }
+
+      // Save the complete AI response to Isar
+      if (fullAiContent.isNotEmpty) {
+        await _saveMessage(
+          chatId: chatId,
+          content: fullAiContent.toString(),
+          role: Role.assistant,
+        );
+      }
+
+      // Yield final event with token usage
+      yield StreamEvent(
+        delta: '',
+        isFinished: true,
+        promptTokens: finalPromptTokens,
+        completionTokens: finalCompletionTokens,
+        totalTokens: finalTotalTokens,
       );
     } catch (e) {
       // Rollback: delete the orphan user message

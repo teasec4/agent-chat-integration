@@ -48,22 +48,27 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeOut,
-      );
-    }
+    if (!_scrollController.hasClients) return;
+    // Don't auto-scroll if user scrolled up (more than 100px from bottom)
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    if (maxScroll - currentScroll > 100) return;
+
+    _scrollController.animateTo(
+      maxScroll,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final chatViewModel = context.watch<ChatViewModel>();
+    final colors = Theme.of(context).colorScheme;
 
     // Scroll to bottom when new messages arrive or during streaming
     final count = chatViewModel.conversationHistory.length;
-    if (count > _previousMessageCount || (chatViewModel.isLoading && count > 0)) {
+    if (count != _previousMessageCount) {
       _previousMessageCount = count;
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     }
@@ -79,13 +84,10 @@ class _ChatPageState extends State<ChatPage> {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Theme.of(context).colorScheme.errorContainer,
+                  color: colors.errorContainer,
                   child: Text(
                     chatViewModel.errorMessage!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onErrorContainer,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: colors.onErrorContainer, fontSize: 13),
                   ),
                 ),
               Expanded(
@@ -97,14 +99,14 @@ class _ChatPageState extends State<ChatPage> {
                             Icon(
                               Icons.chat_bubble_outline_rounded,
                               size: 48,
-                              color: Colors.grey[400],
+                              color: colors.onSurfaceVariant.withValues(alpha: 0.4),
                             ),
                             const SizedBox(height: 12),
                             Text(
                               'Start a conversation',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.grey[500],
+                                color: colors.onSurfaceVariant.withValues(alpha: 0.6),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -112,7 +114,7 @@ class _ChatPageState extends State<ChatPage> {
                               'Send a message to begin',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.grey[400],
+                                color: colors.onSurfaceVariant.withValues(alpha: 0.4),
                               ),
                             ),
                           ],
@@ -125,8 +127,8 @@ class _ChatPageState extends State<ChatPage> {
                         itemBuilder: (context, index) {
                           final msg = chatViewModel.conversationHistory[index];
                           final isFirstInGroup = index == 0 ||
-                              chatViewModel.conversationHistory[index - 1].role.name !=
-                                  msg.role.name;
+                              chatViewModel.conversationHistory[index - 1].role !=
+                                  msg.role;
 
                           return Padding(
                             padding: EdgeInsets.only(
@@ -168,7 +170,7 @@ class _ChatPageState extends State<ChatPage> {
               child: Material(
                 elevation: 2,
                 borderRadius: BorderRadius.circular(20),
-                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                color: colors.surfaceContainerLow,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(20),
                   onTap: widget.onOpenChatList,
@@ -177,7 +179,7 @@ class _ChatPageState extends State<ChatPage> {
                     child: Icon(
                       Icons.chat_bubble_outline_rounded,
                       size: 22,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: colors.primary,
                     ),
                   ),
                 ),

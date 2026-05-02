@@ -97,6 +97,8 @@ class _ChatSidebarState extends State<ChatSidebar> {
   }
 
   Widget _buildChatList(ListChatViewModel vm) {
+    final colors = Theme.of(context).colorScheme;
+
     if (vm.isLoading) {
       return const Center(child: CircularProgressIndicator(strokeWidth: 2));
     }
@@ -108,7 +110,7 @@ class _ChatSidebarState extends State<ChatSidebar> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(vm.errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 12), textAlign: TextAlign.center),
+              Text(vm.errorMessage!, style: TextStyle(color: colors.error, fontSize: 12), textAlign: TextAlign.center),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => vm.loadChats(),
@@ -125,11 +127,11 @@ class _ChatSidebarState extends State<ChatSidebar> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.chat_bubble_outline, size: 40, color: Colors.grey[400]),
+            Icon(Icons.chat_bubble_outline, size: 40, color: colors.onSurfaceVariant.withValues(alpha: 0.4)),
             const SizedBox(height: 12),
-            Text('No chats', style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+            Text('No chats', style: TextStyle(color: colors.onSurfaceVariant.withValues(alpha: 0.6), fontSize: 13)),
             const SizedBox(height: 4),
-            Text('Press + to create one', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+            Text('Press + to create one', style: TextStyle(color: colors.onSurfaceVariant.withValues(alpha: 0.4), fontSize: 11)),
           ],
         ),
       );
@@ -182,7 +184,7 @@ class _ChatSidebarState extends State<ChatSidebar> {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop('delete'),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(ctx).colorScheme.error),
             child: const Text('Delete'),
           ),
         ],
@@ -199,7 +201,7 @@ class _ChatSidebarState extends State<ChatSidebar> {
             TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: Theme.of(ctx).colorScheme.error),
               child: const Text('Delete'),
             ),
           ],

@@ -5,18 +5,24 @@ enum ActiveTab { chat, settings }
 class LeftTabBar extends StatelessWidget {
   final ActiveTab activeTab;
   final ValueChanged<ActiveTab> onTabChanged;
+  final bool compact;
 
   const LeftTabBar({
     super.key,
     required this.activeTab,
     required this.onTabChanged,
+    this.compact = false,
   });
+
+  double get _width => compact ? 40 : 48;
+  double get _iconSize => compact ? 20 : 22;
+  double get _hitSize => compact ? 32 : 36;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      width: 48,
+      width: _width,
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
         border: Border(
@@ -34,6 +40,9 @@ class LeftTabBar extends StatelessWidget {
             isActive: activeTab == ActiveTab.chat,
             onTap: () => onTabChanged(ActiveTab.chat),
             tooltip: 'Chats',
+            iconSize: _iconSize,
+            hitSize: _hitSize,
+            compact: compact,
           ),
           const Spacer(),
           _TabIcon(
@@ -41,6 +50,9 @@ class LeftTabBar extends StatelessWidget {
             isActive: activeTab == ActiveTab.settings,
             onTap: () => onTabChanged(ActiveTab.settings),
             tooltip: 'Settings',
+            iconSize: _iconSize,
+            hitSize: _hitSize,
+            compact: compact,
           ),
           const SizedBox(height: 16),
         ],
@@ -54,12 +66,18 @@ class _TabIcon extends StatelessWidget {
   final bool isActive;
   final VoidCallback onTap;
   final String tooltip;
+  final double iconSize;
+  final double hitSize;
+  final bool compact;
 
   const _TabIcon({
     required this.icon,
     required this.isActive,
     required this.onTap,
     required this.tooltip,
+    required this.iconSize,
+    required this.hitSize,
+    required this.compact,
   });
 
   @override
@@ -72,22 +90,22 @@ class _TabIcon extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       preferBelow: false,
-      margin: const EdgeInsets.only(left: 52),
+      margin: EdgeInsets.only(left: compact ? 44 : 52),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           child: Container(
-            width: 36,
-            height: 36,
+            width: hitSize,
+            height: hitSize,
             decoration: BoxDecoration(
               color: isActive
                   ? theme.colorScheme.primaryContainer.withValues(alpha: 0.6)
                   : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, size: 22, color: color),
+            child: Icon(icon, size: iconSize, color: color),
           ),
         ),
       ),

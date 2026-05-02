@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:gemma4/domain/entities/token_count.dart';
 
 class ChatInput extends StatefulWidget {
   final Function(String) onSend;
   final bool isLoading;
   final String modelName;
-  final int promptTokens;
-  final int completionTokens;
-  final int totalTokens;
-  static const int maxContextLength = 131072;
+  final TokenCount? tokenCount;
 
   const ChatInput({
     super.key,
     required this.onSend,
     this.isLoading = false,
     this.modelName = '',
-    this.promptTokens = 0,
-    this.completionTokens = 0,
-    this.totalTokens = 0,
+    this.tokenCount,
   });
 
   @override
@@ -85,10 +81,10 @@ class _ChatInputState extends State<ChatInput> {
                   ),
                 ),
                 const Spacer(),
-                if (widget.totalTokens > 0)
+                if (widget.tokenCount != null && widget.tokenCount!.total > 0)
                   Flexible(
                     child: Text(
-                      'Tokens: ${widget.totalTokens} / ${ChatInput.maxContextLength}',
+                      'Tokens: ${widget.tokenCount!.total} / ${TokenCount.maxContext}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontSize: 11, color: colors.onSurfaceVariant),

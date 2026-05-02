@@ -74,9 +74,15 @@ class _ChatPageState extends State<ChatPage> {
     }
 
     return Scaffold(
-      body: Stack(
-        children: [
-          Column(
+      floatingActionButton: widget.onOpenChatList != null
+          ? FloatingActionButton.small(
+              onPressed: widget.onOpenChatList,
+              tooltip: 'Open chat list',
+              backgroundColor: colors.secondaryContainer,
+              child: Icon(Icons.chat_bubble_outline_rounded, size: 22, color: colors.onSecondaryContainer),
+            )
+          : null,
+      body: Column(
             children: [
               if (chatViewModel.isLoading && chatViewModel.conversationHistory.isEmpty)
                 const LinearProgressIndicator(),
@@ -154,39 +160,12 @@ class _ChatPageState extends State<ChatPage> {
                     },
                     isLoading: chatViewModel.isLoading,
                     modelName: chatViewModel.model,
-                    promptTokens: chatViewModel.promptTokens,
-                    completionTokens: chatViewModel.completionTokens,
-                    totalTokens: chatViewModel.totalTokens,
+                    tokenCount: chatViewModel.tokenCount,
                   ),
                 ),
               ),
             ],
           ),
-          // Floating chat list button (top-left corner)
-          if (widget.onOpenChatList != null)
-            Positioned(
-              top: 8,
-              left: 8,
-              child: Material(
-                elevation: 2,
-                borderRadius: BorderRadius.circular(20),
-                color: colors.surfaceContainerLow,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: widget.onOpenChatList,
-                  child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Icon(
-                      Icons.chat_bubble_outline_rounded,
-                      size: 22,
-                      color: colors.primary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
     );
   }
 }

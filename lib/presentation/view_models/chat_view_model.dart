@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:gemma4/data/models/chat_request.dart';
+import 'package:gemma4/domain/entities/token_count.dart';
 import 'package:gemma4/domain/entities/chat.dart';
 import 'package:gemma4/domain/entities/message.dart';
 import 'package:gemma4/domain/repositories/chat_repository.dart';
@@ -37,6 +38,8 @@ class ChatViewModel extends ChangeNotifier {
   int get promptTokens => _promptTokens;
   int get completionTokens => _completionTokens;
   int get totalTokens => _totalTokens;
+  TokenCount get tokenCount =>
+      TokenCount(prompt: _promptTokens, completion: _completionTokens, total: _totalTokens);
   Chat? get currentChat => _currentChat;
   String get model => _chatRepository.model;
   List<Message> get conversationHistory =>

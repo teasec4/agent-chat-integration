@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:gemma4/data/db_models/db_entries.dart';
+import 'package:gemma4/domain/entities/settings.dart';
 import 'package:gemma4/domain/repositories/settings_repository.dart';
 
 /// ViewModel for app settings.
@@ -15,7 +15,7 @@ class SettingsViewModel extends ChangeNotifier {
     await _load();
   }
 
-  AppSettings _settings = AppSettings();
+  AppSettings _settings = const AppSettings();
   List<CustomModelPreset> _presets = [];
   bool _loaded = false;
 

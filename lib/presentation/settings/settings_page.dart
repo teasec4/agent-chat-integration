@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gemma4/data/db_models/db_entries.dart';
+import 'package:gemma4/domain/entities/settings.dart';
 import 'package:gemma4/presentation/view_models/settings_view_model.dart';
 import 'package:provider/provider.dart';
 
@@ -77,8 +77,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 subtitle: const Text('Create chat title from first message'),
                 value: s.autoTitle,
                 onChanged: (v) {
-                  final updated = s..autoTitle = v;
-                  settingsVm.saveSettings(updated);
+                  settingsVm.saveSettings(s.copyWith(autoTitle: v));
                 },
                 secondary: const Icon(Icons.auto_awesome_outlined),
               ),
@@ -88,8 +87,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 subtitle: const Text('Show text as it arrives'),
                 value: s.streamResponses,
                 onChanged: (v) {
-                  final updated = s..streamResponses = v;
-                  settingsVm.saveSettings(updated);
+                  settingsVm.saveSettings(s.copyWith(streamResponses: v));
                 },
                 secondary: const Icon(Icons.stream_outlined),
               ),
@@ -188,8 +186,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               style: const TextStyle(fontSize: 14, fontFamily: 'monospace'),
               onChanged: (v) {
-                final updated = s..baseUrl = v.trim();
-                settingsVm.saveSettings(updated);
+                settingsVm.saveSettings(s.copyWith(baseUrl: v.trim()));
               },
             ),
           ),
@@ -216,8 +213,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   style: const TextStyle(fontSize: 14, fontFamily: 'monospace'),
                   onChanged: (v) {
-                    final updated = s..modelName = v.trim();
-                    settingsVm.saveSettings(updated);
+                    settingsVm.saveSettings(s.copyWith(modelName: v.trim()));
                   },
                 ),
               ],
@@ -266,8 +262,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   divisions: 20,
                   label: s.temperature.toStringAsFixed(1),
                   onChanged: (v) {
-                    final updated = s..temperature = v;
-                    settingsVm.saveSettings(updated);
+                    settingsVm.saveSettings(s.copyWith(temperature: v));
                   },
                 ),
                 const SizedBox(height: 8),
@@ -296,8 +291,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         onChanged: (v) {
                           final parsed = int.tryParse(v);
                           if (parsed != null && parsed > 0) {
-                            final updated = s..maxTokens = parsed;
-                            settingsVm.saveSettings(updated);
+                            settingsVm.saveSettings(s.copyWith(maxTokens: parsed));
                           }
                         },
                       ),
@@ -384,12 +378,12 @@ class _SettingsPageState extends State<SettingsPage> {
               tooltip: 'Use this model',
               visualDensity: VisualDensity.compact,
               onPressed: () {
-                final s = settingsVm.settings;
-                final updated = s
-                  ..baseUrl = preset.baseUrl
-                  ..modelName = preset.modelName
-                  ..temperature = preset.temperature
-                  ..maxTokens = preset.maxTokens;
+                final updated = settingsVm.settings.copyWith(
+                  baseUrl: preset.baseUrl,
+                  modelName: preset.modelName,
+                  temperature: preset.temperature,
+                  maxTokens: preset.maxTokens,
+                );
                 _baseUrlController.text = preset.baseUrl;
                 _modelNameController.text = preset.modelName;
                 settingsVm.saveSettings(updated);
@@ -467,10 +461,11 @@ class _SettingsPageState extends State<SettingsPage> {
               final url = _newUrlController.text.trim();
               final modelName = _newModelNameController.text.trim();
               if (url.isNotEmpty && modelName.isNotEmpty) {
-                final preset = CustomModelPreset()
-                  ..name = name
-                  ..baseUrl = url
-                  ..modelName = modelName;
+                final preset = CustomModelPreset(
+                  name: name,
+                  baseUrl: url,
+                  modelName: modelName,
+                );
                 settingsVm.savePreset(preset);
               }
               Navigator.pop(ctx);
@@ -534,10 +529,12 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           FilledButton(
             onPressed: () {
-              preset.name = nameCtrl.text.trim();
-              preset.baseUrl = urlCtrl.text.trim();
-              preset.modelName = modelCtrl.text.trim();
-              settingsVm.savePreset(preset);
+              final updated = preset.copyWith(
+                name: nameCtrl.text.trim(),
+                baseUrl: urlCtrl.text.trim(),
+                modelName: modelCtrl.text.trim(),
+              );
+              settingsVm.savePreset(updated);
               Navigator.pop(ctx);
             },
             child: const Text('Save'),

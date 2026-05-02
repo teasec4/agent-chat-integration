@@ -1,4 +1,4 @@
-import 'package:gemma4/data/db_models/db_entries.dart';
+import 'package:gemma4/domain/entities/settings.dart';
 
 /// Repository for app settings and custom model presets.
 abstract class SettingsRepository {

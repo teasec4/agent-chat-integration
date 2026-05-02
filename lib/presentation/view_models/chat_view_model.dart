@@ -61,6 +61,13 @@ class ChatViewModel extends ChangeNotifier {
 
   Future<void> sendMessage(String message) async {
     _errorMessage = null;
+
+    if (_currentChat == null) {
+      _errorMessage = 'Select or create a chat first.';
+      notifyListeners();
+      return;
+    }
+
     _isLoading = true;
     notifyListeners();
 
